@@ -1,0 +1,4 @@
+grammar repeated_non_terminals
+  final <- non_terminals
+  non_terminals <- non_terminal (" " non_terminals)*
+  non_terminal <- "something"

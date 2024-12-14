@@ -1,0 +1,37 @@
+grammar Lines
+
+    final <- lines
+
+    lines <- line / (lines "\n"+ line)
+
+    line <- markup / plain
+
+    plain <- .+ %make_plain
+
+    markup <- @"::" markup_id @"{" markup_attrs @"}" %make_markup
+
+    markup_id <- row / quoted_text
+
+    row <- "row" <Void>
+
+    quoted_text <- "quoted-text" <QuotedText>
+
+    markup_attrs <- markup_attr / (markup_attrs " "* markup_attr)
+
+    markup_attr <- attr_name @"=" string %make_attr
+
+    attr_name <- [a-zA-Z0-9-]+
+
+    string <- dqstring / sqstring
+
+    sqstring <- "'" sstrchars "'" %make_string
+
+    dqstring <- "\"" dstrchars "\"" %make_string
+
+    sstrchars <- sstrchar / (sstrchars sstrchar)
+
+    dstrchars <- dstrchar / (dstrchars dstrchar)
+
+    sstrchar <- [^\\'\n]
+
+    dstrchar <- [^\\"\n]
