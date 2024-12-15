@@ -23,9 +23,14 @@ function idjoiner(d) {
 
 const noopRenderer = (_attrs) => "";
 
+const _s = (text) => text || "";
+
 const MARKUP_RENDERERS = {
     "quoted-text": (attrs) => {
-        return `${attrs?.quote} - by ${attrs?.author}`;
+        if (!attrs?.quote && !attrs?.author) {
+            return "";
+        }
+        return `${_s(attrs?.quote)} - by ${_s(attrs?.author)}`;
     },
 }
 
@@ -40,13 +45,12 @@ final -> line:*
 
 line -> plaintext {% (d) => _trace(d, id, "line plainline") %}
     | markup_line {% (d) => _trace(d, id, "line markup_line") %}
-    # | colons {% (d) => _trace(d, d=>null, "line colons") %}
 
 markup_line -> _ colons markup_def _ {% (d) => _trace(d, d=>d[2], "markup_line") %}
 
 colons -> "::" ":":*
 
-markup_def -> markup_kw "{" markup_attrs "}" _ "\n" {% (d) => _trace(d, d=>renderMarkup(d[0], d[2]), "markup_def") %}
+markup_def -> markup_kw "{" _ markup_attrs _ "}" _ "\n" {% (d) => _trace(d, d=>renderMarkup(d[0], d[3]), "markup_def") %}
 
 markup_attrs -> markup_attr:* {% (d) => _trace(d, id, "markup_attrs") %}
 
