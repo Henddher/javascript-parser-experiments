@@ -2,36 +2,36 @@ grammar Lines
 
     final <- lines
 
-    lines <- line / (lines "\n"+ line)
+    lines <- line (@_ @_newline+ lines)* %make_lines
 
     line <- markup / plain
 
-    plain <- .+ %make_plain
+    plain <- @_ !colon2x .+ %make_plain
 
-    markup <- @"::" markup_id @"{" markup_attrs @"}" %make_markup
+    markup <- @_ @colon2x markup_id @"{" markup_attr* @"}" %make_markup
 
     markup_id <- row / quoted_text
 
-    row <- "row" <Void>
+    row <- "row" <Row>
 
     quoted_text <- "quoted-text" <QuotedText>
 
-    markup_attrs <- markup_attr / (markup_attrs " "* markup_attr)
-
-    markup_attr <- attr_name @"=" string %make_attr
+    markup_attr <- @_ attr_name @_ @"=" @_ string @_ %make_attr
 
     attr_name <- [a-zA-Z0-9-]+
 
     string <- dqstring / sqstring
 
-    sqstring <- "'" sstrchars "'" %make_string
+    sqstring <- @"'" sstrchar* @"'" %make_string
 
-    dqstring <- "\"" dstrchars "\"" %make_string
-
-    sstrchars <- sstrchar / (sstrchars sstrchar)
-
-    dstrchars <- dstrchar / (dstrchars dstrchar)
+    dqstring <- @"\"" dstrchar* @"\"" %make_string
 
     sstrchar <- [^\\'\n]
 
     dstrchar <- [^\\"\n]
+
+    _ <- [ \t\v\f]*
+
+    _newline <- [\n]
+
+    colon2x <- "::"

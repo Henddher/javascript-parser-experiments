@@ -3,9 +3,17 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "compile-grammar": "./node_modules/canopy/bin/canopy ./grammar.peg",
+    "compile-repeated-non-terminals": "./node_modules/canopy/bin/canopy ./repeated_non_terminals.peg"
   },
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "dependencies": {
+    "canopy": "^0.4.1"
+  }
 }
