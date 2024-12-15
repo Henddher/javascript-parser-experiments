@@ -1,6 +1,17 @@
 @builtin "whitespace.ne"
 @builtin "string.ne"
 
+@{%
+function _trace(d, callback, tag="") {
+    console.log(`<<<< ${tag}`);
+    console.log(JSON.stringify(d, null, 2));
+    res = callback(d);
+    console.log(">>>>");
+    console.log(JSON.stringify(res, null, 2));
+    return res;
+}
+%}
+
 final -> line:*
 
 line -> plaintext
@@ -22,4 +33,4 @@ markup_kw -> [a-zA-Z0-9-]:+
 attr_name -> [a-zA-Z0-9]:+
 
 plaintext -> [^:]
-    | plaintext .
+    | plaintext . {% (d) => _trace(d, d=>d[0].concat(d[1]), "plaintext .") %}

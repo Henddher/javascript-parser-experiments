@@ -2,6 +2,15 @@
 // http://github.com/Hardmath123/nearley
 (function () {
 function id(x) { return x[0]; }
+
+function _trace(d, callback, tag="") {
+    console.log(`<<<< ${tag}`);
+    console.log(JSON.stringify(d, null, 2));
+    let res = callback(d);
+    console.log(">>>>");
+    console.log(JSON.stringify(res, null, 2));
+    return res;
+}
 var grammar = {
     Lexer: undefined,
     ParserRules: [
@@ -61,7 +70,7 @@ var grammar = {
     {"name": "attr_name$ebnf$1", "symbols": ["attr_name$ebnf$1", /[a-zA-Z0-9]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "attr_name", "symbols": ["attr_name$ebnf$1"]},
     {"name": "plaintext", "symbols": [/[^:]/]},
-    {"name": "plaintext", "symbols": ["plaintext", /./]}
+    {"name": "plaintext", "symbols": ["plaintext", /./], "postprocess": (d) => _trace(d, d=>d[0].concat(d[1]), "plaintext .")}
 ]
   , ParserStart: "final"
 }

@@ -17,9 +17,18 @@ function nearleyParseInner(text) {
         } else {
             error = `Ambiguous grammar. Found ${parser.results.length} results`;
             badResults = parser.results.slice(0, 2); // first 2.
+            // TODO: Careful with the following, flatten0 looks like 't,e,x,t'
+            // Flatten and compare. If they match, warn and return one.
+            let flatten0 = badResults[0].flat(Infinity).join();
+            let flatten1 = badResults[1].flat(Infinity).join();
+            if (flatten0 == flatten1) {
+                console.warn(error);
+                console.log(flatten0);
+                return { text: flatten0, error };
+            }
         }
         console.error(error);
-        console.warn(JSON.stringify(badResults, 2));
+        console.warn(JSON.stringify(badResults, null, 2));
         console.log(parser.table);
         return { error };
     }
