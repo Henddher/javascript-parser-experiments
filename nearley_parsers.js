@@ -19,12 +19,12 @@ function nearleyParseInner(text) {
             badResults = parser.results.slice(0, 2); // first 2.
             // TODO: Careful with the following, flatten0 looks like 't,e,x,t'
             // Flatten and compare. If they match, warn and return one.
-            let flatten0 = badResults[0].flat(Infinity).join();
-            let flatten1 = badResults[1].flat(Infinity).join();
-            if (flatten0 == flatten1) {
+            let flatten0 = badResults[0].flat(Infinity);
+            let flatten1 = badResults[1].flat(Infinity);
+            if (flatten0.join() == flatten1.join()) {
                 console.warn(error);
                 console.log(flatten0);
-                return { text: flatten0, error };
+                return { text: flatten0.join(""), warning: error };
             }
         }
         console.error(error);

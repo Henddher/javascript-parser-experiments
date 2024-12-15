@@ -6,10 +6,34 @@ function id(x) { return x[0]; }
 function _trace(d, callback, tag="") {
     console.log(`<<<< ${tag}`);
     console.log(JSON.stringify(d, null, 2));
-    let res = callback(d);
+    res = callback(d);
     console.log(">>>>");
     console.log(JSON.stringify(res, null, 2));
     return res;
+}
+
+function newMarkupAttribute(attrName, attrValue) {
+    let attr = {};
+    attr[attrName] = attrValue;
+    return attr;
+}
+
+function idjoiner(d) {
+    return id(d).join("");
+}
+
+const noopRenderer = (_attrs) => "";
+
+const MARKUP_RENDERERS = {
+    "quoted-text": (attrs) => {
+        return `${attrs?.quote} - by ${attrs?.author}`;
+    },
+}
+
+function renderMarkup(markupKw, markupAttrs) {
+    let renderer = MARKUP_RENDERERS[markupKw] || noopRenderer;
+    let attrs = Object.assign({}, ...markupAttrs);
+    return renderer(attrs);
 }
 var grammar = {
     Lexer: undefined,
@@ -49,28 +73,29 @@ var grammar = {
     {"name": "final$ebnf$1", "symbols": []},
     {"name": "final$ebnf$1", "symbols": ["final$ebnf$1", "line"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "final", "symbols": ["final$ebnf$1"]},
-    {"name": "line", "symbols": ["plaintext"]},
+    {"name": "line", "symbols": ["plaintext"], "postprocess": (d) => _trace(d, d=>d[0].flat(Infinity), "line plainline")},
     {"name": "line", "symbols": ["markup_line"]},
-    {"name": "markup_line", "symbols": ["_", "colons", "markup_def", "_"]},
-    {"name": "markup_line", "symbols": ["_", "colons", "_"]},
+    {"name": "markup_line", "symbols": ["_", "colons", "markup_def", "_"], "postprocess": (d) => _trace(d, d=>d[2], "markup_line")},
     {"name": "colons$string$1", "symbols": [{"literal":":"}, {"literal":":"}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "colons$ebnf$1", "symbols": []},
     {"name": "colons$ebnf$1", "symbols": ["colons$ebnf$1", {"literal":":"}], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "colons", "symbols": ["colons$string$1", "colons$ebnf$1"]},
-    {"name": "markup_def$ebnf$1", "symbols": []},
-    {"name": "markup_def$ebnf$1", "symbols": ["markup_def$ebnf$1", "markup_attr"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "markup_def", "symbols": ["markup_kw", {"literal":"{"}, "markup_def$ebnf$1", {"literal":"}"}, "_", {"literal":"\n"}]},
-    {"name": "markup_attr", "symbols": ["_", "attr_name", "_", {"literal":"="}, "_", "string", "_"]},
+    {"name": "markup_def", "symbols": ["markup_kw", {"literal":"{"}, "markup_attrs", {"literal":"}"}, "_", {"literal":"\n"}], "postprocess": (d) => _trace(d, d=>renderMarkup(d[0], d[2]), "markup_def")},
+    {"name": "markup_attrs$ebnf$1", "symbols": []},
+    {"name": "markup_attrs$ebnf$1", "symbols": ["markup_attrs$ebnf$1", "markup_attr"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "markup_attrs", "symbols": ["markup_attrs$ebnf$1"], "postprocess": (d) => _trace(d, id, "markup_attrs")},
+    {"name": "markup_attr", "symbols": ["_", "attr_name", "_", {"literal":"="}, "_", "string", "_"], "postprocess": (d) => _trace(d, d=>newMarkupAttribute(d[1], d[5]), "markup_attr")},
     {"name": "string", "symbols": ["dqstring"]},
-    {"name": "string", "symbols": ["sqstring"]},
+    {"name": "string", "symbols": ["sqstring"], "postprocess": id},
     {"name": "markup_kw$ebnf$1", "symbols": [/[a-zA-Z0-9-]/]},
     {"name": "markup_kw$ebnf$1", "symbols": ["markup_kw$ebnf$1", /[a-zA-Z0-9-]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "markup_kw", "symbols": ["markup_kw$ebnf$1"]},
+    {"name": "markup_kw", "symbols": ["markup_kw$ebnf$1"], "postprocess": (d) => _trace(d, d=>idjoiner(d), "markup_kw")},
     {"name": "attr_name$ebnf$1", "symbols": [/[a-zA-Z0-9]/]},
     {"name": "attr_name$ebnf$1", "symbols": ["attr_name$ebnf$1", /[a-zA-Z0-9]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "attr_name", "symbols": ["attr_name$ebnf$1"]},
-    {"name": "plaintext", "symbols": [/[^:]/]},
-    {"name": "plaintext", "symbols": ["plaintext", /./], "postprocess": (d) => _trace(d, d=>d[0].concat(d[1]), "plaintext .")}
+    {"name": "attr_name", "symbols": ["attr_name$ebnf$1"], "postprocess": (d) => _trace(d, d=>idjoiner(d), "attr_name")},
+    {"name": "plaintext$ebnf$1", "symbols": [/[^:]/]},
+    {"name": "plaintext$ebnf$1", "symbols": ["plaintext$ebnf$1", /[^:]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "plaintext", "symbols": ["plaintext$ebnf$1"], "postprocess": (d) => _trace(d, d=>idjoiner(d), "plaintext")}
 ]
   , ParserStart: "final"
 }
