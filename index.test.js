@@ -1,5 +1,6 @@
-const {pegParse, pegParse2} = require("./index.js");
-const parse = pegParse;
+const parsers = require("./index.js");
+const parse = parsers.pegParse;
+const pegParse2 = parsers.pegParse2;
 
 test("dummy line", () => {
     res = parse("dummy line");
