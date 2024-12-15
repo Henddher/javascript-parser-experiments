@@ -2,19 +2,25 @@ const nearley = require("nearley");
 const grammar = require("./nearley_grammar.js");
 
 function nearleyParseInner(text) {
-    let parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar));
+    let parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar), { keepHistory: true });
     try {
-        let error = undefined;
-        let res = parser.feed(text);
-        if (res.results.length == 1) {
-            return { text: res.results[0] };
+        parser.feed(text);
+
+        if (parser.results.length == 1) {
+            return { text: parser.results[0] };
         }
-        if (res.results.length == 0) {
+
+        let error;
+        let badResults = [];
+        if (parser.results.length == 0) {
             error = "No results";
         } else {
-            error = "Ambiguous grammar";
+            error = `Ambiguous grammar. Found ${parser.results.length} results`;
+            badResults = parser.results.slice(0, 2); // first 2.
         }
-        console.error(error)
+        console.error(error);
+        console.warn(JSON.stringify(badResults, 2));
+        console.log(parser.table);
         return { error };
     }
     catch (parseError) {
@@ -25,7 +31,7 @@ function nearleyParseInner(text) {
 
 function nearleyParse(text) {
     res = nearleyParseInner(text);
-    return res?.text?.length >= 0 ? res?.text : res.error;
+    return res?.error || res.text;
 }
 
 module.exports = { nearleyParseInner, nearleyParse }
