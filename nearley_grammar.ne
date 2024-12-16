@@ -46,7 +46,7 @@ final -> line:*
 line -> plaintext {% (d) => _trace(d, id, "line plainline") %}
     | markup_line {% (d) => _trace(d, id, "line markup_line") %}
 
-markup_line -> _ colons markup_def _ {% (d) => _trace(d, d=>d[2], "markup_line") %}
+markup_line -> colons markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
 
 colons -> "::" ":":*
 

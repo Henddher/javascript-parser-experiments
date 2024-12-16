@@ -80,7 +80,7 @@ var grammar = {
     {"name": "final", "symbols": ["final$ebnf$1"]},
     {"name": "line", "symbols": ["plaintext"], "postprocess": (d) => _trace(d, id, "line plainline")},
     {"name": "line", "symbols": ["markup_line"], "postprocess": (d) => _trace(d, id, "line markup_line")},
-    {"name": "markup_line", "symbols": ["_", "colons", "markup_def", "_"], "postprocess": (d) => _trace(d, d=>d[2], "markup_line")},
+    {"name": "markup_line", "symbols": ["colons", "markup_def"], "postprocess": (d) => _trace(d, d=>d[1], "markup_line")},
     {"name": "colons$string$1", "symbols": [{"literal":":"}, {"literal":":"}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "colons$ebnf$1", "symbols": []},
     {"name": "colons$ebnf$1", "symbols": ["colons$ebnf$1", {"literal":":"}], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
