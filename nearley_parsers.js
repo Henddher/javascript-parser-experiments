@@ -1,13 +1,17 @@
 const nearley = require("nearley");
 const grammar = require("./nearley_grammar.js");
 
+const ALLOW_AMBIGUOUS_GRAMMAR = true;
+
 function nearleyParseInner(text) {
     let parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar), { keepHistory: true });
     try {
         parser.feed(text);
 
         if (parser.results.length == 1) {
-            return { text: parser.results[0].flat(Infinity).join("") };
+            return {
+                text: parser.results[0].flat(Infinity).join("")
+            };
         }
 
         let error;
@@ -23,7 +27,13 @@ function nearleyParseInner(text) {
             if (flatten0 == flatten1) {
                 console.warn(error);
                 console.log(flatten0);
-                return { text: flatten0, warning: error };
+
+                if (ALLOW_AMBIGUOUS_GRAMMAR) {
+                    return {
+                        text: flatten0,
+                        warning: error
+                    };
+                }
             }
         }
         console.error(error);
