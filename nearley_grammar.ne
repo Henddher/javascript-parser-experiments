@@ -50,7 +50,7 @@ markup_line -> colons markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
 
 colons -> "::" ":":*
 
-markup_def -> markup_kw "{" _ markup_attrs _ "}" _ "\n" {% (d) => _trace(d, d=>renderMarkup(d[0], d[3]), "markup_def") %}
+markup_def -> markup_kw "{" _ markup_attrs _ "}" {% (d) => _trace(d, d=>renderMarkup(d[0], d[3]), "markup_def") %}
 
 markup_attrs -> markup_attr:* {% (d) => _trace(d, id, "markup_attrs") %}
 

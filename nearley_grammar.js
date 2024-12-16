@@ -85,7 +85,7 @@ var grammar = {
     {"name": "colons$ebnf$1", "symbols": []},
     {"name": "colons$ebnf$1", "symbols": ["colons$ebnf$1", {"literal":":"}], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "colons", "symbols": ["colons$string$1", "colons$ebnf$1"]},
-    {"name": "markup_def", "symbols": ["markup_kw", {"literal":"{"}, "_", "markup_attrs", "_", {"literal":"}"}, "_", {"literal":"\n"}], "postprocess": (d) => _trace(d, d=>renderMarkup(d[0], d[3]), "markup_def")},
+    {"name": "markup_def", "symbols": ["markup_kw", {"literal":"{"}, "_", "markup_attrs", "_", {"literal":"}"}], "postprocess": (d) => _trace(d, d=>renderMarkup(d[0], d[3]), "markup_def")},
     {"name": "markup_attrs$ebnf$1", "symbols": []},
     {"name": "markup_attrs$ebnf$1", "symbols": ["markup_attrs$ebnf$1", "markup_attr"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "markup_attrs", "symbols": ["markup_attrs$ebnf$1"], "postprocess": (d) => _trace(d, id, "markup_attrs")},
