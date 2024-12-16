@@ -63,12 +63,12 @@ describe("parse", () => {
         res = parse("  ::quoted-text{ quote = 'To be or not to be ...'}\n");
         expect(res).toEqual("  To be or not to be ... - by ");
     });
-    // test(" ::quoted-text{author='Hamlet'  quote='To be or not to be ...'} \n \n another line \n", () => {
-    //     res = parse(" ::quoted-text{author='Hamlet'  quote='To be or not to be ...'} \n \n another line \n");
-    //     expect(res).toEqual("To be or not to be ... - Hamlet \n \n another line \n");
-    // });
-    // test("::quoted-text{quote='To be or not to be ... That is the question.'} \n \n another line \n", () => {
-    //     res = pegParse("a line\n ::quoted-text{quote='To be or not to be ... That is the question.'} \n \n another line \n");
+    test(" ::quoted-text{author='Hamlet'  quote='To be or not to be ...'} \n \n another line \n", () => {
+        res = parse(" ::quoted-text{author='Hamlet'  quote='To be or not to be ...'} \n \n another line \n");
+        expect(res).toEqual(" To be or not to be ... - by Hamlet \n \n another line \n");
+    });
+    // test("a line\n ::quoted-text{quote='To be or not to be ... That is the question.'} \n \n another line \n", () => {
+    //     res = parse("a line\n ::quoted-text{quote='To be or not to be ... That is the question.'} \n \n another line \n");
     //     expect(res).toEqual("To be or not to be ... That is the question. \n \n another line \n");
     // });
 });
