@@ -7,10 +7,10 @@ describe("parse", () => {
         res = parse("dummy line");
         expect(res).toEqual("dummy line");
     });
-    // test("a line\nanother line", () => {
-    //     res = parse("a line\nanother line");
-    //     expect(res).toEqual("a line\nanother line");
-    // });
+    test("a line\nanother line", () => {
+        res = parse("a line\nanother line");
+        expect(res).toEqual("a line\nanother line");
+    });
     // test("a line\n\nanother line", () => {
     //     res = parse("a line\n\nanother line");
     //     expect(res).toEqual("a line\n\nanother line");
@@ -19,6 +19,10 @@ describe("parse", () => {
     //     res = parse(" a line \n \n another line \n");
     //     expect(res).toEqual("a line \n \n another line \n");
     // });
+    test("::row{}\n", () => {
+        res = parse("::row{}\n");
+        expect(res).toEqual("");
+    });
     test("::row{ }\n", () => {
         res = parse("::row{ }\n");
         expect(res).toEqual("");
@@ -37,6 +41,10 @@ describe("parse", () => {
     // });
     test("::quoted-text{}\n", () => {
         res = parse("::quoted-text{}\n");
+        expect(res).toEqual("");
+    });
+    test("::quoted-text{ }\n", () => {
+        res = parse("::quoted-text{ }\n");
         expect(res).toEqual("");
     });
     test("::quoted-text{author='Hamlet'}\n", () => {
