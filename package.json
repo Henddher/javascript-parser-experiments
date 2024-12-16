@@ -5,8 +5,8 @@
   "scripts": {
     "test": "jest",
     "compile-ne-grammar": "./node_modules/nearley/bin/nearleyc.js ./nearley_grammar.ne --out ./nearley_grammar.js",
-    "compile-peg-grammar": "./node_modules/canopy/bin/canopy ./grammar.peg",
-    "compile-peg-repeated-non-terminals": "./node_modules/canopy/bin/canopy ./repeated_non_terminals.peg"
+    "compile-canopy-grammar": "./node_modules/canopy/bin/canopy ./canopy_grammar.peg",
+    "compile-canopy-repeated-non-terminals": "./node_modules/canopy/bin/canopy ./repeated_non_terminals.peg"
   },
   "author": "",
   "license": "ISC",

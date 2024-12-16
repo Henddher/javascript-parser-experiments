@@ -1,5 +1,5 @@
 /**
- * This file was generated from grammar.peg
+ * This file was generated from canopy_grammar.peg
  * See https://canopy.jcoglan.com/ for documentation
  */
 

@@ -26,3 +26,10 @@ The following libraries were *arbitrarely* selected from a quick internet search
 - [Canopy](https://canopy.jcoglan.com/)
 - [Nearley](https://nearley.js.org/)
 
+## Updating the Grammar
+
+```shell
+$ $EDITOR nearley_grammar.ne # edit
+$ npm run compile-ne-grammar
+$ npm test
+```

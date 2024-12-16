@@ -1,5 +1,5 @@
-parser = require("./grammar.js");
-parser2 = require("./repeated_non_terminals.js");
+parser = require("./canopy_grammar.js");
+parser2 = require("./canopy_repeated_non_terminals.js");
 
 function join_elems(elements) {
     // Handles string and TreeNode
