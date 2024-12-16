@@ -3,6 +3,10 @@ const parsers = require("./index.js");
 const parse = parsers.nearleyParse;
 
 describe("parse", () => {
+    test("plainline ambiguous grammar: ab", () => {
+        res = parse("ab");
+        expect(res).toEqual("ab");
+    });
     test("dummy line", () => {
         res = parse("dummy line");
         expect(res).toEqual("dummy line");
