@@ -7,7 +7,7 @@ function nearleyParseInner(text) {
         parser.feed(text);
 
         if (parser.results.length == 1) {
-            return { text: parser.results[0] };
+            return { text: parser.results[0].flat(Infinity).join("") };
         }
 
         let error;
@@ -18,12 +18,12 @@ function nearleyParseInner(text) {
             error = `Ambiguous grammar. Found ${parser.results.length} results`;
             badResults = parser.results.slice(0, 2); // first 2.
             // Flatten and compare. If they match, warn and return one.
-            let flatten0 = badResults[0].flat(Infinity);
-            let flatten1 = badResults[1].flat(Infinity);
-            if (flatten0.join("") == flatten1.join("")) {
+            let flatten0 = badResults[0].flat(Infinity).join("");
+            let flatten1 = badResults[1].flat(Infinity).join("");
+            if (flatten0 == flatten1) {
                 console.warn(error);
                 console.log(flatten0);
-                return { text: flatten0.join(""), warning: error };
+                return { text: flatten0, warning: error };
             }
         }
         console.error(error);
