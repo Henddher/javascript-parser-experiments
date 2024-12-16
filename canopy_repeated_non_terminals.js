@@ -1,5 +1,5 @@
 /**
- * This file was generated from repeated_non_terminals.peg
+ * This file was generated from canopy_repeated_non_terminals.peg
  * See https://canopy.jcoglan.com/ for documentation
  */
 
