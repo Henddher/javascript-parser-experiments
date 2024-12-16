@@ -5,7 +5,7 @@
 function _trace(d, callback, tag="") {
     console.log(`<<<< ${tag}`);
     console.log(JSON.stringify(d, null, 2));
-    res = callback(d);
+    let res = callback(d);
     console.log(">>>>");
     console.log(JSON.stringify(res, null, 2));
     return res;
