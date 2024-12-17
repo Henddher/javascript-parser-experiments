@@ -47,7 +47,7 @@ const moo = require("moo");
 const lexer = moo.compile({
     // EOF: /$/, // won't compile because it matches empty string
     EOF: /<EOF>/,
-    colon_2plus: /::+/,
+    colon_2plus: /::/,
     any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
     colon: /:/, // one colon (lowest priority)
 });
@@ -99,11 +99,22 @@ const lexer = moo.compile({
 #     | %colon %any_but_2xcolon test
 #     | %any_but_2xcolon test {% (d) => _trace(d, d=>d, "test") %}
 
-test -> %EOF # ✅ (no ambiguity. <EOF> must be fed)
-    | %colon_2plus markup_def test
-    | %colon %any_but_2xcolon test
-    | %any_but_2xcolon %colon test # {% (d) => _trace(d, d=>d, "test") %}
+# test -> %EOF # ❌ (no ambiguity. <EOF> must be fed) loops forever on plain:text
+#     | %colon_2plus markup_def test
+#     | %colon %any_but_2xcolon test
+#     | %any_but_2xcolon %colon test # {% (d) => _trace(d, d=>d, "test") %}
+#     | %any_but_2xcolon test {% (d) => _trace(d, d=>d, "test") %}
+
+# test -> %EOF {% (d) => _trace(d, d=>d, "test") %} ❌ (no ambiguity. <EOF> must be fed) fails with :plaintext, plaintext: and :plaintext:
+#     | %colon_2plus markup_def test {% (d) => _trace(d, d=>d, "test") %}
+#     | %any_but_2xcolon %colon %any_but_2xcolon test {% (d) => _trace(d, d=>d, "test") %}
+#     | %any_but_2xcolon test {% (d) => _trace(d, d=>d, "test") %}
+
+test -> %EOF {% (d) => _trace(d, d=>d, "test") %} # ❌ (no ambiguity. <EOF> must be fed) fails with plaintext:, plain:text and :plaintext:
+    | %colon_2plus markup_def test {% (d) => _trace(d, d=>d, "test") %}
     | %any_but_2xcolon test {% (d) => _trace(d, d=>d, "test") %}
+    | %any_but_2xcolon %colon test {% (d) => _trace(d, d=>d, "test") %}
+    | %colon test {% (d) => _trace(d, d=>d, "test") %}
 
 # --- 
 

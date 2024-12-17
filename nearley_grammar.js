@@ -48,7 +48,7 @@ const moo = require("moo");
 const lexer = moo.compile({
     // EOF: /$/, // won't compile because it matches empty string
     EOF: /<EOF>/,
-    colon_2plus: /::+/,
+    colon_2plus: /::/,
     any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
     colon: /:/, // one colon (lowest priority)
 });
@@ -94,11 +94,11 @@ var grammar = {
             return d.join("");
         }
         },
-    {"name": "test", "symbols": [(lexer.has("EOF") ? {type: "EOF"} : EOF)]},
-    {"name": "test", "symbols": [(lexer.has("colon_2plus") ? {type: "colon_2plus"} : colon_2plus), "markup_def", "test"]},
-    {"name": "test", "symbols": [(lexer.has("colon") ? {type: "colon"} : colon), (lexer.has("any_but_2xcolon") ? {type: "any_but_2xcolon"} : any_but_2xcolon), "test"]},
-    {"name": "test", "symbols": [(lexer.has("any_but_2xcolon") ? {type: "any_but_2xcolon"} : any_but_2xcolon), (lexer.has("colon") ? {type: "colon"} : colon), "test"]},
+    {"name": "test", "symbols": [(lexer.has("EOF") ? {type: "EOF"} : EOF)], "postprocess": (d) => _trace(d, d=>d, "test")},
+    {"name": "test", "symbols": [(lexer.has("colon_2plus") ? {type: "colon_2plus"} : colon_2plus), "markup_def", "test"], "postprocess": (d) => _trace(d, d=>d, "test")},
     {"name": "test", "symbols": [(lexer.has("any_but_2xcolon") ? {type: "any_but_2xcolon"} : any_but_2xcolon), "test"], "postprocess": (d) => _trace(d, d=>d, "test")},
+    {"name": "test", "symbols": [(lexer.has("any_but_2xcolon") ? {type: "any_but_2xcolon"} : any_but_2xcolon), (lexer.has("colon") ? {type: "colon"} : colon), "test"], "postprocess": (d) => _trace(d, d=>d, "test")},
+    {"name": "test", "symbols": [(lexer.has("colon") ? {type: "colon"} : colon), "test"], "postprocess": (d) => _trace(d, d=>d, "test")},
     {"name": "line", "symbols": ["plaintext"], "postprocess": (d) => _trace(d, d=>d, "line plainline")},
     {"name": "line", "symbols": ["markup_line"], "postprocess": (d) => _trace(d, d=>d, "line markup_line")},
     {"name": "line", "symbols": ["plaintext", {"literal":":"}, "plaintext"], "postprocess": (d) => _trace(d, d=>[d.join("")], "line plainline : plainline")},

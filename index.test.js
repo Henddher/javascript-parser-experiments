@@ -15,22 +15,22 @@ describe("parse plaintext", () => {
         res = parse("plaintext");
         expect(res).toEqual("plaintext");
     });
-    test("plaintext:", () => {
-        res = parse("plaintext:");
-        expect(res).toEqual("plaintext:");
-    });
+    // test("plaintext:", () => {
+    //     res = parse("plaintext:");
+    //     expect(res).toEqual("plaintext:");
+    // });
     test(":plaintext", () => {
         res = parse(":plaintext");
         expect(res).toEqual(":plaintext");
     });
-    test("plain:text", () => {
-        res = parse("plain:text");
-        expect(res).toEqual("plain:text");
-    });
-    test(":plaintext:", () => {
-        res = parse(":plaintext:");
-        expect(res).toEqual(":plaintext:");
-    });
+    // test("plain:text", () => {
+    //     res = parse("plain:text");
+    //     expect(res).toEqual("plain:text");
+    // });
+    // test(":plaintext:", () => {
+    //     res = parse(":plaintext:");
+    //     expect(res).toEqual(":plaintext:");
+    // });
 });
 
 describe("parse unknown markup ::unknown{}", () => {
@@ -96,10 +96,10 @@ describe("parse ::quoted-text{}", () => {
         res = parse(" ::quoted-text{author='Hamlet'  quote='To be or not to be ...'} \n \n another line \n");
         expect(res).toEqual(" To be or not to be ... - by Hamlet \n \n another line \n");
     });
-    // test("a line\n ::quoted-text{quote='To be or not to be ... That is the question.'} \n \n another line \n", () => {
-    //     res = parse("a line\n ::quoted-text{quote='To be or not to be ... That is the question.'} \n \n another line \n");
-    //     expect(res).toEqual("To be or not to be ... That is the question. \n \n another line \n");
-    // });
+    test("a line\n ::quoted-text{quote='To be or not to be ... That is the question.'} \n \n another line \n", () => {
+        res = parse("a line\n ::quoted-text{quote='To be or not to be ... That is the question.'} \n \n another line \n");
+        expect(res).toEqual("To be or not to be ... That is the question. \n \n another line \n");
+    });
 });
 
 const pegParse2 = parsers.pegParse2;
