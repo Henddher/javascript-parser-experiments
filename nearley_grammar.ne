@@ -65,7 +65,8 @@ function renderMarkup(markupKw, markupAttrs) {
 
 line -> plaintext {% (d) => _trace(d, d=>d, "line plainline") %}
     | markup_line {% (d) => _trace(d, d=>d, "line markup_line") %}
-    | ":" plaintext {% (d) => _trace(d, d=>[d[0].concat(d[1])], "line :") %}
+    | ":" plaintext {% (d) => _trace(d, d=>[d[0].concat(d[1])], "line : plainline") %}
+    | plaintext ":" {% (d) => _trace(d, d=>[d[0].concat(d[1])], "line plainline :") %}
 
 markup_line -> colons markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
 
