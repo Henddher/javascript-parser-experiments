@@ -1,10 +1,10 @@
 const nearley = require("nearley");
 const grammar = require("./nearley_grammar.js");
 
-const ALLOW_AMBIGUOUS_GRAMMAR = true;
+const ALLOW_AMBIGUOUS_GRAMMAR = false;
 
 function nearleyParseInner(text) {
-    let parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar), { keepHistory: true });
+    let parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar), { keepHistory: false });
     try {
         parser.feed(text);
 
