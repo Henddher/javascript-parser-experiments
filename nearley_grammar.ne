@@ -2,6 +2,8 @@
 @builtin "string.ne"
 
 @{%
+// TODO: change order of params and put 'tag' first, default `callback=(d)=>d`
+// so `_trace(tag)`. Use Function.bind
 function _trace(d, callback, tag="") {
     console.log(`<<<< ${tag}`);
     console.log(JSON.stringify(d, null, 2));
@@ -40,7 +42,25 @@ function renderMarkup(markupKw, markupAttrs) {
     let attrs = Object.assign({}, ...markupAttrs);
     return renderer(attrs);
 }
+
+const moo = require("moo");
+const lexer = moo.compile({
+    // EOF: /$/, // won't compile because it matches empty string
+    EOF: /<EOF>/,
+    colon_2plus: /::+/,
+    any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
+    colon: /:[^:]/, // strict one colon with no colon after (maybe not needed since colon_2plus has higher prior)
+});
+
+// https://github.com/no-context/moo/issues/64
+// const itt = require('itt')
+// const tokens = itt.push({ type: 'eof', value: '<eof>' }, lexer)
+// for (const tok of tokens) {
+//   console.log(tok)
+// }
 %}
+
+@lexer lexer
 
 # all -> text all # ❌ (no results)
 # text -> [^:]
@@ -64,11 +84,36 @@ function renderMarkup(markupKw, markupAttrs) {
 
 # final -> line
 
+# test -> %any_but_2xcolon {% (d) => _trace(d, d=>d, "test") %} # ❌ (parseError on 2nd letter)
+
+# test -> %any_but_2xcolon test {% (d) => _trace(d, d=>d, "test") %} # ❌ (no results, but when EOF is fed, parseError)
+
+# test -> %EOF # ✅ (no ambiguity. <EOF> must be fed)
+#     | %any_but_2xcolon test {% (d) => _trace(d, d=>d, "test") %}
+
+# test -> %EOF # ❌ (parser error on the 2nd letter)
+#     | %any_but_2xcolon {% (d) => _trace(d, d=>d, "test") %}
+
+# test -> %EOF # ✅ (no ambiguity. <EOF> must be fed) # still end w/ : fails.
+#     | %colon_2plus markup_def test
+#     | %colon %any_but_2xcolon test
+#     | %any_but_2xcolon test {% (d) => _trace(d, d=>d, "test") %}
+
+test -> %EOF # ✅ (no ambiguity. <EOF> must be fed)
+    | %colon_2plus markup_def test
+    | %colon %any_but_2xcolon test
+    | %any_but_2xcolon %colon test # {% (d) => _trace(d, d=>d, "test") %}
+    | %any_but_2xcolon test {% (d) => _trace(d, d=>d, "test") %}
+
+# --- 
+
+# Don't use @lexer (w/ and w/o EOF)
+# Use moo's error (with token?)
+
 line -> plaintext {% (d) => _trace(d, d=>d, "line plainline") %}
     | markup_line {% (d) => _trace(d, d=>d, "line markup_line") %}
     | plaintext ":" plaintext {% (d) => _trace(d, d=>[d.join("")], "line plainline : plainline") %}
-    # | ":" plaintext {% (d) => _trace(d, d=>[d[0].concat(d[1])], "line : plainline") %}
-    # | plaintext ":" {% (d) => _trace(d, d=>[d[0].concat(d[1])], "line plainline :") %}
+    # | ":" line {% (d) => _trace(d, d=>d, "line :") %}
 
 markup_line -> colons markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
 

@@ -3,7 +3,7 @@ const parsers = require("./index.js");
 const parse = parsers.nearleyParse;
 
 describe("parse plaintext", () => {
-    test("<EOF>", () => {
+    test("empty input", () => {
         res = parse("");
         expect(res).toEqual("");
     });

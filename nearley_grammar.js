@@ -3,6 +3,8 @@
 (function () {
 function id(x) { return x[0]; }
 
+// TODO: change order of params and put 'tag' first, default `callback=(d)=>d`
+// so `_trace(tag)`. Use Function.bind
 function _trace(d, callback, tag="") {
     console.log(`<<<< ${tag}`);
     console.log(JSON.stringify(d, null, 2));
@@ -41,8 +43,24 @@ function renderMarkup(markupKw, markupAttrs) {
     let attrs = Object.assign({}, ...markupAttrs);
     return renderer(attrs);
 }
+
+const moo = require("moo");
+const lexer = moo.compile({
+    // EOF: /$/, // won't compile because it matches empty string
+    EOF: /<EOF>/,
+    colon_2plus: /::+/,
+    any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
+    colon: /:[^:]/, // strict one colon with no colon after (maybe not needed since colon_2plus has higher prior)
+});
+
+// https://github.com/no-context/moo/issues/64
+// const itt = require('itt')
+// const tokens = itt.push({ type: 'eof', value: '<eof>' }, lexer)
+// for (const tok of tokens) {
+//   console.log(tok)
+// }
 var grammar = {
-    Lexer: undefined,
+    Lexer: lexer,
     ParserRules: [
     {"name": "_$ebnf$1", "symbols": []},
     {"name": "_$ebnf$1", "symbols": ["_$ebnf$1", "wschar"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
@@ -76,14 +94,18 @@ var grammar = {
             return d.join("");
         }
         },
+    {"name": "test", "symbols": [(lexer.has("EOF") ? {type: "EOF"} : EOF)]},
+    {"name": "test", "symbols": [(lexer.has("colon_2plus") ? {type: "colon_2plus"} : colon_2plus), "markup_def", "test"]},
+    {"name": "test", "symbols": [(lexer.has("colon") ? {type: "colon"} : colon), (lexer.has("any_but_2xcolon") ? {type: "any_but_2xcolon"} : any_but_2xcolon), "test"]},
+    {"name": "test", "symbols": [(lexer.has("any_but_2xcolon") ? {type: "any_but_2xcolon"} : any_but_2xcolon), (lexer.has("colon") ? {type: "colon"} : colon), "test"]},
+    {"name": "test", "symbols": [(lexer.has("any_but_2xcolon") ? {type: "any_but_2xcolon"} : any_but_2xcolon), "test"], "postprocess": (d) => _trace(d, d=>d, "test")},
     {"name": "line", "symbols": ["plaintext"], "postprocess": (d) => _trace(d, d=>d, "line plainline")},
     {"name": "line", "symbols": ["markup_line"], "postprocess": (d) => _trace(d, d=>d, "line markup_line")},
     {"name": "line", "symbols": ["plaintext", {"literal":":"}, "plaintext"], "postprocess": (d) => _trace(d, d=>[d.join("")], "line plainline : plainline")},
     {"name": "markup_line", "symbols": ["colons", "markup_def"], "postprocess": (d) => _trace(d, d=>d[1], "markup_line")},
-    {"name": "colons$string$1", "symbols": [{"literal":":"}, {"literal":":"}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "colons$ebnf$1", "symbols": []},
     {"name": "colons$ebnf$1", "symbols": ["colons$ebnf$1", {"literal":":"}], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "colons", "symbols": ["colons$string$1", "colons$ebnf$1"]},
+    {"name": "colons", "symbols": [{"literal":"::"}, "colons$ebnf$1"]},
     {"name": "markup_def", "symbols": ["markup_kw", {"literal":"{"}, "_", "markup_attrs", {"literal":"}"}], "postprocess": (d) => _trace(d, d=>renderMarkup(d[0], d[3]), "markup_def")},
     {"name": "markup_attrs$ebnf$1", "symbols": []},
     {"name": "markup_attrs$ebnf$1", "symbols": ["markup_attrs$ebnf$1", "markup_attr"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
@@ -101,7 +123,7 @@ var grammar = {
     {"name": "plaintext$ebnf$1", "symbols": ["plaintext$ebnf$1", /[^:]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "plaintext", "symbols": ["plaintext$ebnf$1"], "postprocess": (d) => _trace(d, d=>idjoiner(d), "plaintext")}
 ]
-  , ParserStart: "line"
+  , ParserStart: "test"
 }
 if (typeof module !== 'undefined'&& typeof module.exports !== 'undefined') {
    module.exports = grammar;
