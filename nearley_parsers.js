@@ -12,8 +12,8 @@ function nearleyParseInner(text) {
 
         if (parser.results.length == 1) {
             return {
-                // text: parser.results[0].flat(Infinity).join("") // TODO: PUT BACK
-                text: parser.results[0]
+                text: parser.results[0].flat(Infinity).join("") // TODO: PUT BACK
+                // text: parser.results[0]
             };
         }
 
