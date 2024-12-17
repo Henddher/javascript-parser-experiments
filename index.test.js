@@ -2,27 +2,38 @@ const parsers = require("./index.js");
 // const parse = parsers.pegParse;
 const parse = parsers.nearleyParse;
 
-describe("parse", () => {
-    test("plainline ambiguous grammar: ab", () => {
-        res = parse("ab");
-        expect(res).toEqual("ab");
+describe("parse plaintext", () => {
+    test("<EOF>", () => {
+        res = parse("");
+        expect(res).toEqual("");
     });
-    test("dummy line", () => {
-        res = parse("dummy line");
-        expect(res).toEqual("dummy line");
+    test("grammar is not ambiguous ('ok', a 2-letter word would produce 2 results if grammar were ambiguous)", () => {
+        res = parse("ok");
+        expect(res).toEqual("ok");
     });
-    test("a line\nanother line", () => {
-        res = parse("a line\nanother line");
-        expect(res).toEqual("a line\nanother line");
+    test("plaintext", () => {
+        res = parse("plaintext");
+        expect(res).toEqual("plaintext");
     });
-    // test("a line\n\nanother line", () => {
-    //     res = parse("a line\n\nanother line");
-    //     expect(res).toEqual("a line\n\nanother line");
-    // });
-    // test(" a line \n \n another line \n", () => {
-    //     res = parse(" a line \n \n another line \n");
-    //     expect(res).toEqual("a line \n \n another line \n");
-    // });
+    test("plaintext:", () => {
+        res = parse("plaintext:");
+        expect(res).toEqual("plaintext:");
+    });
+    test(":plaintext", () => {
+        res = parse(":plaintext");
+        expect(res).toEqual(":plaintext");
+    });
+    test("plain:text", () => {
+        res = parse("plain:text");
+        expect(res).toEqual("plain:text");
+    });
+    test(":plaintext:", () => {
+        res = parse(":plaintext:");
+        expect(res).toEqual(":plaintext:");
+    });
+});
+
+describe("parse ::row{}", () => {
     test("::row{}", () => {
         res = parse("::row{}");
         expect(res).toEqual("");
@@ -31,18 +42,13 @@ describe("parse", () => {
         res = parse("::row{ }");
         expect(res).toEqual("");
     });
-    test("::row{a='1' b='2'}", () => {
+    test("::row{a='1'}", () => {
         res = parse("::row{a='1' b='2'}");
         expect(res).toEqual("");
     });
-    // test("::row{} \n \n another line \n", () => {
-    //     res = parse(" ::row{} \n \n another line \n");
-    //     expect(res).toEqual(" \n \n another line \n");
-    // });
-    // test("::row{a='1'} \n \n another line \n", () => {
-    //     res = parse(" ::row{a='1'} \n \n another line \n");
-    //     expect(res).toEqual(" \n \n another line \n");
-    // });
+});
+
+describe("parse ::row{}", () => {
     test("::quoted-text{}", () => {
         res = parse("::quoted-text{}");
         expect(res).toEqual("");

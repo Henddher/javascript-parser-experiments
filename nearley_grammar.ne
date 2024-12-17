@@ -61,7 +61,7 @@ function renderMarkup(markupKw, markupAttrs) {
 # all -> text # ✅
 # text -> [^:]:+
 
-final -> line
+# final -> line
 
 line -> plaintext {% (d) => _trace(d, id, "line plainline") %}
     | markup_line {% (d) => _trace(d, id, "line markup_line") %}

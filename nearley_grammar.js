@@ -75,7 +75,6 @@ var grammar = {
             return d.join("");
         }
         },
-    {"name": "final", "symbols": ["line"]},
     {"name": "line", "symbols": ["plaintext"], "postprocess": (d) => _trace(d, id, "line plainline")},
     {"name": "line", "symbols": ["markup_line"], "postprocess": (d) => _trace(d, id, "line markup_line")},
     {"name": "markup_line", "symbols": ["colons", "markup_def"], "postprocess": (d) => _trace(d, d=>d[1], "markup_line")},
@@ -100,7 +99,7 @@ var grammar = {
     {"name": "plaintext$ebnf$1", "symbols": ["plaintext$ebnf$1", /[^:]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "plaintext", "symbols": ["plaintext$ebnf$1"], "postprocess": (d) => _trace(d, d=>idjoiner(d), "plaintext")}
 ]
-  , ParserStart: "final"
+  , ParserStart: "line"
 }
 if (typeof module !== 'undefined'&& typeof module.exports !== 'undefined') {
    module.exports = grammar;
