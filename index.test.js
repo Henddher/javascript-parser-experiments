@@ -33,6 +33,25 @@ describe("parse plaintext", () => {
     });
 });
 
+describe("parse unknown markup ::unknown{}", () => {
+    test("::unknown{}", () => {
+        res = parse("::unknown{}");
+        expect(res).toEqual("{}");
+    });
+    test("::unknown{ }", () => {
+        res = parse("::unknown{ }");
+        expect(res).toEqual("{}");
+    });
+    test("::unknown{a='1'}", () => {
+        res = parse("::unknown{a='1'}");
+        expect(res).toEqual("{\"a\":\"1\"}");
+    });
+    test("::unknown{a='1', b='2'}", () => {
+        res = parse("::unknown{a='1' b='2'}");
+        expect(res).toEqual("{\"a\":\"1\",\"b\":\"2\"}");
+    });
+});
+
 describe("parse ::row{}", () => {
     test("::row{}", () => {
         res = parse("::row{}");
@@ -48,7 +67,7 @@ describe("parse ::row{}", () => {
     });
 });
 
-describe("parse ::row{}", () => {
+describe("parse ::quoted-text{}", () => {
     test("::quoted-text{}", () => {
         res = parse("::quoted-text{}");
         expect(res).toEqual("");

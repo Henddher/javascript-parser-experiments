@@ -32,10 +32,11 @@ const MARKUP_RENDERERS = {
         }
         return `${_s(attrs?.quote)} - by ${_s(attrs?.author)}`;
     },
+    "row": noopRenderer,
 }
 
 function renderMarkup(markupKw, markupAttrs) {
-    let renderer = MARKUP_RENDERERS[markupKw] || noopRenderer;
+    let renderer = MARKUP_RENDERERS[markupKw] || JSON.stringify;
     let attrs = Object.assign({}, ...markupAttrs);
     return renderer(attrs);
 }
@@ -65,8 +66,9 @@ function renderMarkup(markupKw, markupAttrs) {
 
 line -> plaintext {% (d) => _trace(d, d=>d, "line plainline") %}
     | markup_line {% (d) => _trace(d, d=>d, "line markup_line") %}
-    | ":" plaintext {% (d) => _trace(d, d=>[d[0].concat(d[1])], "line : plainline") %}
-    | plaintext ":" {% (d) => _trace(d, d=>[d[0].concat(d[1])], "line plainline :") %}
+    | plaintext ":" plaintext {% (d) => _trace(d, d=>[d.join("")], "line plainline : plainline") %}
+    # | ":" plaintext {% (d) => _trace(d, d=>[d[0].concat(d[1])], "line : plainline") %}
+    # | plaintext ":" {% (d) => _trace(d, d=>[d[0].concat(d[1])], "line plainline :") %}
 
 markup_line -> colons markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
 
