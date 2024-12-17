@@ -18,6 +18,7 @@ function nearleyParseInner(text) {
         // Without the EOF hack, `parser.results.length == 0`.
         // See:
         // https://github.com/kach/nearley/issues/305
+        // https://github.com/kach/nearley/issues/306
         // https://github.com/search?q=repo%3Akach%2Fnearley+EOF&type=issues
         //
         // Another option is to catch the exception from `parser.results[0]`
