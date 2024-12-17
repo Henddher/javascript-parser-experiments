@@ -50,7 +50,7 @@ const lexer = moo.compile({
     EOF: /<EOF>/,
     colon_2plus: /::+/,
     any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
-    colon: /:[^:]/, // strict one colon with no colon after (maybe not needed since colon_2plus has higher prior)
+    colon: /:/, // one colon (lowest priority)
 });
 
 // https://github.com/no-context/moo/issues/64
