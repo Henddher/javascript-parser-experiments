@@ -153,15 +153,36 @@ function renderMarkup(markupKw, markupAttrs) {
 # Don't use @lexer (w/ and w/o EOF)
 # Use moo's error (with token?)
 
-line -> plaintext {% (d) => _trace(d, d=>d, "line plainline") %} # ✅ok ✅plain:text ❌plaintext: ❌:plaintext
+# line -> plaintext {% (d) => _trace(d, d=>d, "line plainline") %} # ✅ok ✅plaintext: ❌:plaintext ✅plain:text ❌:plaintext:
+#     | markup_line {% (d) => _trace(d, d=>d, "line markup_line") %}
+#     | plaintext ":" plaintext {% (d) => _trace(d, d=>[d.join("")], "line plainline : plainline") %}
+#     # | ":" line {% (d) => _trace(d, d=>d, "line :") %}
+
+# line -> plaintext {% (d) => _trace(d, d=>d, "line plainline") %} # ✅ok ❌plain:text ❌plaintext: ❌:plaintext
+#     | markup_line {% (d) => _trace(d, d=>d, "line markup_line") %}
+#     # | plaintext ":" line {% (d) => _trace(d, d=>[d.join("")], "line plainline : plainline") %}
+#     | ":" line {% (d) => _trace(d, d=>d, "line :") %}
+
+# line -> plaintext {% (d) => _trace(d, d=>d, "line plainline") %} # ✅ok ✅plain:text ❌plaintext: ❌:plaintext
+#     | markup_line {% (d) => _trace(d, d=>d, "line markup_line") %}
+#     # | plaintext ":" plaintext {% (d) => _trace(d, d=>[d.join("")], "line plainline : plainline") %}
+#     | ":" line {% (d) => _trace(d, d=>d, "line :") %}
+
+# line -> plaintext {% (d) => _trace(d, d=>d, "line plainline") %} # ✅ok ✅plaintext: ✅:plaintext ✅plain:text ❌:plaintext:
+#     | markup_line {% (d) => _trace(d, d=>d, "line markup_line") %}
+#     | plaintext ":" plaintext {% (d) => _trace(d, d=>[d.join("")], "line plainline : plainline") %}
+#     # | ":" line {% (d) => _trace(d, d=>d, "line :") %}
+
+# line -> plaintext {% (d) => _trace(d, d=>d, "line plainline") %} # ✅ok ✅plaintext: ✅:plaintext ✅plain:text ❌:plaintext: ❌:plain:te:xt:
+#     | markup_line {% (d) => _trace(d, d=>d, "line markup_line") %}
+#     | plaintext ":" plaintext {% (d) => _trace(d, d=>[d.join("")], "line plainline : plainline") %}
+#     # | ":" line {% (d) => _trace(d, d=>d, "line :") %}
+
+line -> plaintext {% (d) => _trace(d, d=>d, "line plainline") %} # ✅✅✅
     | markup_line {% (d) => _trace(d, d=>d, "line markup_line") %}
-    | plaintext ":" plaintext {% (d) => _trace(d, d=>[d.join("")], "line plainline : plainline") %}
+    | line ":" plaintext {% (d) => _trace(d, d=>[d.join("")], "line plainline : plainline") %}
     # | ":" line {% (d) => _trace(d, d=>d, "line :") %}
 
-# line -> plaintext {% (d) => _trace(d, d=>d, "line plainline") %}
-#     | markup_line {% (d) => _trace(d, d=>d, "line markup_line") %}
-#     | plaintext ":" line {% (d) => _trace(d, d=>[d.join("")], "line plainline : plainline") %}
-    # | ":" line {% (d) => _trace(d, d=>d, "line :") %}
 
 markup_line -> colons markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
 

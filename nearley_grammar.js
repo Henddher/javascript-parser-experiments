@@ -101,7 +101,7 @@ var grammar = {
         },
     {"name": "line", "symbols": ["plaintext"], "postprocess": (d) => _trace(d, d=>d, "line plainline")},
     {"name": "line", "symbols": ["markup_line"], "postprocess": (d) => _trace(d, d=>d, "line markup_line")},
-    {"name": "line", "symbols": ["plaintext", {"literal":":"}, "plaintext"], "postprocess": (d) => _trace(d, d=>[d.join("")], "line plainline : plainline")},
+    {"name": "line", "symbols": ["line", {"literal":":"}, "plaintext"], "postprocess": (d) => _trace(d, d=>[d.join("")], "line plainline : plainline")},
     {"name": "markup_line", "symbols": ["colons", "markup_def"], "postprocess": (d) => _trace(d, d=>d[1], "markup_line")},
     {"name": "colons$string$1", "symbols": [{"literal":":"}, {"literal":":"}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "colons$ebnf$1", "symbols": []},

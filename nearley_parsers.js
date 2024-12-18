@@ -25,7 +25,7 @@ function nearleyParseInner(text) {
         // Another option is to catch the exception from `parser.results[0]`
         // and re-raise as EOF like it was done here:
         // https://github.com/penrose/penrose/pull/510/files
-        parser.feed(text);
+        parser.feed(` ${text} `);
 
         // if (parser.results.length == 1) {
         //     return {
@@ -45,7 +45,7 @@ function nearleyParseInner(text) {
                 error = "No results";
             } else if (parser.results.length == 1) { // TODO: Remove this block when EOF is addressed
                 return {
-                    text: parser.results[0].flat(Infinity).join("")
+                    text: parser.results[0].flat(Infinity).join("").trim()
                 };
             } else {
                 error = `Ambiguous grammar. Found ${parser.results.length} results`;

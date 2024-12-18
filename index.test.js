@@ -31,6 +31,10 @@ describe("parse plaintext", () => {
         res = parse(":plaintext:");
         expect(res).toEqual(":plaintext:");
     });
+    test("plain:te:xt", () => {
+        res = parse("plain:te:xt");
+        expect(res).toEqual("plain:te:xt");
+    });
 });
 
 describe("parse unknown markup ::unknown{}", () => {
