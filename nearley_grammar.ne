@@ -77,136 +77,14 @@ const lexer = moo.compile({
 
 @lexer lexer
 
-# all -> text all # ❌ (no results)
-# text -> [^:]
-
-# all -> text all # ❌ (no results)
-# text -> [^:]:+
-#     | null
-
-# all -> text all # ❌
-#     | null
-# text -> [^:]:+
-
-# all -> text all # ❌ (no results)
-# text -> [^:]:+
-
-# all -> text:* # ❌
-# text -> [^:]:+
-
-# all -> text # ✅
-# text -> [^:]:+
-
-# final -> line
-
-# test -> %any_but_2xcolon {% (d) => _trace(d, d=>d, "test") %} # ❌ (parseError on 2nd letter)
-
-# test -> %any_but_2xcolon test {% (d) => _trace(d, d=>d, "test") %} # ❌ (no results, but when EOF is fed, parseError)
-
-# test -> %EOF # ✅ (no ambiguity. <EOF> must be fed)
-#     | %any_but_2xcolon test {% (d) => _trace(d, d=>d, "test") %}
-
-# test -> %EOF # ❌ (parser error on the 2nd letter)
-#     | %any_but_2xcolon {% (d) => _trace(d, d=>d, "test") %}
-
-# test -> %EOF # ✅ (no ambiguity. <EOF> must be fed) # still end w/ : fails.
-#     | %colon_2plus markup_def test
-#     | %colon %any_but_2xcolon test
-#     | %any_but_2xcolon test {% (d) => _trace(d, d=>d, "test") %}
-
-# test -> %EOF # ❌ (no ambiguity. <EOF> must be fed) loops forever on plain:text
-#     | %colon_2plus markup_def test
-#     | %colon %any_but_2xcolon test
-#     | %any_but_2xcolon %colon test # {% (d) => _trace(d, d=>d, "test") %}
-#     | %any_but_2xcolon test {% (d) => _trace(d, d=>d, "test") %}
-
-# test -> %EOF {% (d) => _trace(d, d=>d, "test") %} ❌ (no ambiguity. <EOF> must be fed) fails with :plaintext, plaintext: and :plaintext:
-#     | %colon_2plus markup_def test {% (d) => _trace(d, d=>d, "test") %}
-#     | %any_but_2xcolon %colon %any_but_2xcolon test {% (d) => _trace(d, d=>d, "test") %}
-#     | %any_but_2xcolon test {% (d) => _trace(d, d=>d, "test") %}
-
-# test -> %EOF {% (d) => _trace(d, d=>d, "test") %} # ❌ syntax error on 2nd letter
-#     # | %colon_2plus markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
-#     | %any_but_colon {% (d) => _trace(d, d=>d, "test") %}
-#     # | %colon {% (d) => _trace(d, d=>d, "test") %}
-
-# test -> %EOF {% (d) => _trace(d, d=>d, "test") %} # ❌ syntax error on 1st letter
-#     # | %colon_2plus markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
-#     | test %any_but_colon {% (d) => _trace(d, d=>d, "test") %}
-#     # | %colon {% (d) => _trace(d, d=>d, "test") %}
-
-# test -> %EOF {% (d) => _trace(d, d=>d, "test") %} # ✅ no ambiguity, lexer error on :
-#     # | %colon_2plus markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
-#     | %any_but_colon:+ {% (d) => _trace(d, d=>d, "test") %}
-#     # | %colon {% (d) => _trace(d, d=>d, "test") %}
-
-# test -> %EOF {% (d) => _trace(d, d=>d, "test") %} # ✅ no ambiguity, lexer error on :
-#     # | %colon_2plus markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
-#     | %any_but_colon:+ {% (d) => _trace(d, d=>d, "test") %}
-#     | %any_but_colon:+ %colon {% (d) => _trace(d, d=>d, "test") %}
-#     # | %colon {% (d) => _trace(d, d=>d, "test") %}
-
-# test -> %EOF {% (d) => _trace(d, d=>d, "test") %} # ❌ ambiguity
-#     # | %colon_2plus markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
-#     | %any_but_colon:+ {% (d) => _trace(d, d=>d, "test") %}
-#     | test %any_but_colon:+ {% (d) => _trace(d, d=>d, "test") %}
-#     | %colon {% (d) => _trace(d, d=>d, "test") %}
-
-# test -> %EOF {% (d) => _trace(d, d=>d, "test") %} # ❌ no results
-#     # | %colon_2plus markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
-#     | plain test {% (d) => _trace(d, d=>d, "test") %}
-#     | ":" {% (d) => _trace(d, d=>d, "test") %}
-# plain -> %any_but_colon:+
-
-# --- 
-
-# Don't use @lexer (w/ and w/o EOF)
-# Use moo's error (with token?)
-
-# line -> plaintext {% (d) => _trace(d, d=>d, "line plainline") %} # ✅ok ✅plaintext: ❌:plaintext ✅plain:text ❌:plaintext:
-#     | markup_line {% (d) => _trace(d, d=>d, "line markup_line") %}
-#     | plaintext ":" plaintext {% (d) => _trace(d, d=>[d.join("")], "line plainline : plainline") %}
-#     # | ":" line {% (d) => _trace(d, d=>d, "line :") %}
-
-# line -> plaintext {% (d) => _trace(d, d=>d, "line plainline") %} # ✅ok ❌plain:text ❌plaintext: ❌:plaintext
-#     | markup_line {% (d) => _trace(d, d=>d, "line markup_line") %}
-#     # | plaintext ":" line {% (d) => _trace(d, d=>[d.join("")], "line plainline : plainline") %}
-#     | ":" line {% (d) => _trace(d, d=>d, "line :") %}
-
-# line -> plaintext {% (d) => _trace(d, d=>d, "line plainline") %} # ✅ok ✅plain:text ❌plaintext: ❌:plaintext
-#     | markup_line {% (d) => _trace(d, d=>d, "line markup_line") %}
-#     # | plaintext ":" plaintext {% (d) => _trace(d, d=>[d.join("")], "line plainline : plainline") %}
-#     | ":" line {% (d) => _trace(d, d=>d, "line :") %}
-
-# line -> plaintext {% (d) => _trace(d, d=>d, "line plainline") %} # ✅ok ✅plaintext: ✅:plaintext ✅plain:text ❌:plaintext:
-#     | markup_line {% (d) => _trace(d, d=>d, "line markup_line") %}
-#     | plaintext ":" plaintext {% (d) => _trace(d, d=>[d.join("")], "line plainline : plainline") %}
-#     # | ":" line {% (d) => _trace(d, d=>d, "line :") %}
-
-# line -> plaintext {% (d) => _trace(d, d=>d, "line plainline") %} # ✅ok ✅plaintext: ✅:plaintext ✅plain:text ❌:plaintext: ❌:plain:te:xt:
-#     | markup_line {% (d) => _trace(d, d=>d, "line markup_line") %}
-#     | plaintext ":" plaintext {% (d) => _trace(d, d=>[d.join("")], "line plainline : plainline") %}
-#     # | ":" line {% (d) => _trace(d, d=>d, "line :") %}
-
-# line -> plaintext {% (d) => _trace(d, d=>d, "line plainline") %} # ✅plaintext ❌::?? because of plaintext
-#     | markup_line {% (d) => _trace(d, d=>d, "line markup_line") %}
-#     | line ":" plaintext {% (d) => _trace(d, d=>d, "line plainline : plainline") %}
-#     # | ":" line {% (d) => _trace(d, d=>d, "line :") %}
-
 content -> markup_line {% (d) => _trace(d, d=>d, "markup_line") %}
-    | %any_but_colon:+ ":":* {% (d) => _trace(d, d=>d, "markup_line") %}
-    # | ":" {% (d) => _trace(d, d=>d, "markup_line") %}
-    # | markup_pad {% (d) => _trace(d, d=>d, "markup_line") %}
-    # | %any_but_colon:+ ":":* %any_but_colon {% (d) => _trace(d, d=>d, "markup_line") %} # loops
-    # | content ":":* %any_but_colon {% (d) => _trace(d, d=>d, "markup_line") %} # loops
-    # | ":":* %any_but_colon {% (d) => _trace(d, d=>d, "markup_line") %} # does nothing
-    # | ":":+ %any_but_colon {% (d) => _trace(d, d=>d, "markup_line") %} # does nothing
-    | ":" content {% (d) => _trace(d, d=>d, "markup_line") %}
+    | content markup_line {% (d) => _trace(d, d=>d, "markup_line") %}
+    | %any_but_colon
+    | content %any_but_colon {% (d) => _trace(d, d=>d, "markup_line") %}
+    | ":" {% (d) => _trace(d, d=>d, "markup_line") %}
+    | content ":" {% (d) => _trace(d, d=>d, "markup_line") %}
 
 markup_line -> %colon2x markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
-# markup_pad -> ":":+
-
-# colons -> "::":+
 
 markup_def -> markup_kw "{" _ markup_attrs "}" {% (d) => _trace(d, d=>renderMarkup(d[0], d[3]), "markup_def") %}
 
