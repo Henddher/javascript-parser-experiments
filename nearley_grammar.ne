@@ -79,9 +79,9 @@ const lexer = moo.compile({
 
 content -> markup_line {% (d) => _trace(d, d=>d, "markup_line") %}
     | content markup_line {% (d) => _trace(d, d=>d, "markup_line") %}
-    | %any_but_colon
+    | %any_but_colon {% (d) => _trace(d, d=>d, "markup_line") %}
     | content %any_but_colon {% (d) => _trace(d, d=>d, "markup_line") %}
-    | ":" {% (d) => _trace(d, d=>d, "markup_line") %}
+    | ":":+ {% (d) => _trace(d, d=>d, "markup_line") %}
     | content ":" {% (d) => _trace(d, d=>d, "markup_line") %}
 
 markup_line -> %colon2x markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}

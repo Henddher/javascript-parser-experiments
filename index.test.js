@@ -56,11 +56,11 @@ describe("parse unknown markup ::unknown{}", () => {
     });
     test(":::unknown{}", () => {
         res = parse("::unknown{}");
-        expect(res).toEqual("");
+        expect(res).toEqual("{}");
     });
     test("::::unknown{}", () => {
         res = parse(":::unknown{}");
-        expect(res).toEqual("");
+        expect(res).toEqual("{}");
     });
 });
 
