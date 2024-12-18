@@ -3,38 +3,38 @@ const parsers = require("./index.js");
 const parse = parsers.nearleyParse;
 
 describe("parse plaintext", () => {
-    test("empty input", () => {
+    test("no input", () => {
         res = parse("");
         expect(res).toEqual("");
     });
-    test("grammar is not ambiguous ('ok', a 2-letter word would produce 2 results if grammar were ambiguous)", () => {
-        res = parse("ok");
-        expect(res).toEqual("ok");
+    test("grammar is not ambiguous ('pt', a 2-letter word would produce 2 results if grammar were ambiguous)", () => {
+        res = parse("pt");
+        expect(res).toEqual("pt");
     });
     test("plaintext", () => {
         res = parse("plaintext");
         expect(res).toEqual("plaintext");
     });
-    // test("plaintext:", () => {
-    //     res = parse("plaintext:");
-    //     expect(res).toEqual("plaintext:");
-    // });
-    // test(":plaintext", () => {
-    //     res = parse(":plaintext");
-    //     expect(res).toEqual(":plaintext");
-    // });
-    // test("plain:text", () => {
-    //     res = parse("plain:text");
-    //     expect(res).toEqual("plain:text");
-    // });
-    // test(":plaintext:", () => {
-    //     res = parse(":plaintext:");
-    //     expect(res).toEqual(":plaintext:");
-    // });
-    // test("plain:te:xt", () => {
-    //     res = parse("plain:te:xt");
-    //     expect(res).toEqual("plain:te:xt");
-    // });
+    test("plaintext:", () => {
+        res = parse("plaintext:");
+        expect(res).toEqual("plaintext:");
+    });
+    test(":plaintext", () => {
+        res = parse(":plaintext");
+        expect(res).toEqual(":plaintext");
+    });
+    test("plain:text", () => {
+        res = parse("plain:text");
+        expect(res).toEqual("plain:text");
+    });
+    test(":plaintext:", () => {
+        res = parse(":plaintext:");
+        expect(res).toEqual(":plaintext:");
+    });
+    test("plain:te:xt", () => {
+        res = parse("plain:te:xt");
+        expect(res).toEqual("plain:te:xt");
+    });
 });
 
 describe("parse unknown markup ::unknown{}", () => {
@@ -54,12 +54,59 @@ describe("parse unknown markup ::unknown{}", () => {
         res = parse("::unknown{a='1' b='2'}");
         expect(res).toEqual("{\"a\":\"1\",\"b\":\"2\"}");
     });
+    test(":::unknown{}", () => {
+        res = parse("::unknown{}");
+        expect(res).toEqual("");
+    });
+    test("::::unknown{}", () => {
+        res = parse(":::unknown{}");
+        expect(res).toEqual("");
+    });
 });
 
-describe("return 'parse error' with invalid ::markup", () => {
-    test("::markup <space> {} is not allowed", () => {
-        res = parse("::markup {}");
+describe("return 'parse error' with invalid markup", () => {
+    test("::invalid <space> {} is not allowed", () => {
+        res = parse("::invalid {}");
         expect(res).toEqual("Parse error");
+    });
+    test("::invalid <space> {} is not allowed", () => {
+        res = parse("::invalid{");
+        expect(res).toEqual("Parse error");
+    });
+    test("::invalid <space> {} is not allowed", () => {
+        res = parse("::invalid}");
+        expect(res).toEqual("Parse error");
+    });
+    test("::invalid <space> {} is not allowed", () => {
+        res = parse("::invalid{{");
+        expect(res).toEqual("Parse error");
+    });
+    test("::invalid <space> {} is not allowed", () => {
+        res = parse("::invalid{a='}");
+        expect(res).toEqual("Parse error");
+    });
+    test("::invalid <space> {} is not allowed", () => {
+        res = parse("::invalid{a}");
+        expect(res).toEqual("Parse error");
+    });
+    test("::invalid <space> {} is not allowed", () => {
+        res = parse("::invalid{=}");
+        expect(res).toEqual("Parse error");
+    });
+});
+
+describe("ignore ::+", () => {
+    test(":: is allowed and gets skipped", () => {
+        res = parse("::");
+        expect(res).toEqual("");
+    });
+    test("::: is allowed and gets skipped", () => {
+        res = parse(":::");
+        expect(res).toEqual("");
+    });
+    test(":::: is allowed and gets skipped", () => {
+        res = parse("::::");
+        expect(res).toEqual("");
     });
 });
 
@@ -103,18 +150,6 @@ describe("parse ::quoted-text{}", () => {
         res = parse("::quoted-text{unknown='unknown' author='Hamlet' quote='To be or not to be ...'}");
         expect(res).toEqual("To be or not to be ... - by Hamlet");
     });
-    // test("  ::quoted-text{author='Hamlet' quote='To be or not to be ...'} text", () => {
-    //     res = parse("  ::quoted-text{author='Hamlet' quote='To be or not to be ...'} text");
-    //     expect(res).toEqual("  To be or not to be ... - by Hamlet text");
-    // });
-    // test(" ::quoted-text{author='Hamlet'  quote='To be or not to be ...'} \n \n another line \n", () => {
-    //     res = parse(" ::quoted-text{author='Hamlet'  quote='To be or not to be ...'} \n \n another line \n");
-    //     expect(res).toEqual(" To be or not to be ... - by Hamlet \n \n another line \n");
-    // });
-    // test("a line\n ::quoted-text{quote='To be or not to be ... That is the question.'} \n \n another line \n", () => {
-    //     res = parse("a line\n ::quoted-text{quote='To be or not to be ... That is the question.'} \n \n another line \n");
-    //     expect(res).toEqual("To be or not to be ... That is the question. \n \n another line \n");
-    // });
 });
 
 const pegParse2 = parsers.pegParse2;
