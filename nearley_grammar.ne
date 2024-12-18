@@ -77,16 +77,24 @@ const lexer = moo.compile({
 
 @lexer lexer
 
-content -> markup_line {% (d) => _trace(d, d=>d, "markup_line") %}
-    | content markup_line {% (d) => _trace(d, d=>d, "markup_line") %}
-    | %any_but_colon {% (d) => _trace(d, d=>d, "markup_line") %}
-    | content %any_but_colon {% (d) => _trace(d, d=>d, "markup_line") %}
-    | ":":+ {% (d) => _trace(d, d=>d, "markup_line") %}
-    | content ":" {% (d) => _trace(d, d=>d, "markup_line") %}
+content -> markup_line {% (d) => _trace(d, d=>d, "trace") %}
+    | content markup_line {% (d) => _trace(d, d=>d, "trace") %}
+    | %any_but_colon {% (d) => _trace(d, d=>d, "trace") %}
+    | content %any_but_colon {% (d) => _trace(d, d=>d, "trace") %}
+    | ":" {% (d) => _trace(d, d=>d, "trace") %}
+    | content ":" {% (d) => _trace(d, d=>d, "trace") %}
+
+# ✅
+# Always use `{% (d) => _trace(d, d=>d), "trace") %}` as processor
 
 markup_line -> %colon2x markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
+    # | %colon2x {% (d) => _trace(d, d=>d, "trace") %} # ❌⏳
+    # | markup_line %colon2x {% (d) => _trace(d, d=>d, "trace") %} # ❌
+    # | markup_line ":" {% (d) => _trace(d, d=>d, "trace") %} # ❌
+    # | %colon2x markup_line {% (d) => _trace(d, d=>d, "trace") %} # ❌ 
 
 markup_def -> markup_kw "{" _ markup_attrs "}" {% (d) => _trace(d, d=>renderMarkup(d[0], d[3]), "markup_def") %}
+    # | _ {% (d) => _trace(d, d=>d, "trace") %} # ❌⏳
 
 markup_attrs -> markup_attr:* {% (d) => _trace(d, id, "markup_attrs") %}
 
