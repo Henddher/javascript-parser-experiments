@@ -65,33 +65,34 @@ describe("parse unknown markup ::unknown{}", () => {
 });
 
 describe("return 'parse error' with invalid markup", () => {
+    let parseErrorRegex = /Parse error\.\n*/;
     test("::invalid <space> {} is not allowed", () => {
         res = parse("::invalid {}");
-        expect(res).toEqual("Parse error");
+        expect(res).toMatch(parseErrorRegex);
     });
     test("::invalid <space> {} is not allowed", () => {
         res = parse("::invalid{");
-        expect(res).toEqual("Parse error");
+        expect(res).toMatch(parseErrorRegex);
     });
     test("::invalid <space> {} is not allowed", () => {
         res = parse("::invalid}");
-        expect(res).toEqual("Parse error");
+        expect(res).toMatch(parseErrorRegex);
     });
     test("::invalid <space> {} is not allowed", () => {
         res = parse("::invalid{{");
-        expect(res).toEqual("Parse error");
+        expect(res).toMatch(parseErrorRegex);
     });
     test("::invalid <space> {} is not allowed", () => {
         res = parse("::invalid{a='}");
-        expect(res).toEqual("Parse error");
+        expect(res).toMatch(parseErrorRegex);
     });
     test("::invalid <space> {} is not allowed", () => {
         res = parse("::invalid{a}");
-        expect(res).toEqual("Parse error");
+        expect(res).toMatch(parseErrorRegex);
     });
     test("::invalid <space> {} is not allowed", () => {
         res = parse("::invalid{=}");
-        expect(res).toEqual("Parse error");
+        expect(res).toMatch(parseErrorRegex);
     });
 });
 

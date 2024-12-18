@@ -81,7 +81,7 @@ function nearleyParseInner(text) {
     }
     catch (parseError) {
         console.error(parseError);
-        return { error: "Parse error" };
+        return { error: `Parse error.\n${parseError}` };
     }
 }
 
