@@ -186,7 +186,7 @@ line -> plaintext {% (d) => _trace(d, d=>d, "line plainline") %} # ✅✅✅
 
 markup_line -> colons markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
 
-colons -> "::" ":":*
+colons -> ":" ":" ":":*
 
 markup_def -> markup_kw "{" _ markup_attrs "}" {% (d) => _trace(d, d=>renderMarkup(d[0], d[3]), "markup_def") %}
 
