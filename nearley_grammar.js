@@ -44,14 +44,19 @@ function renderMarkup(markupKw, markupAttrs) {
     return renderer(attrs);
 }
 
-const moo = require("moo");
-const lexer = moo.compile({
-    // EOF: /$/, // won't compile because it matches empty string
-    EOF: /<EOF>/,
-    colon_2plus: /::/,
-    any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
-    colon: /:/, // one colon (lowest priority)
-});
+//const moo = require("moo");
+//const lexer = moo.compile({
+//    // EOF: /$/, // won't compile because it matches empty string
+//    EOF: /<EOF>/,
+//    colon_2plus: /::/,
+//    // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
+//    // colon: /:/, // one colon (lowest priority)
+//    // markup_kw: /[a-zA-Z0-9-]+/,
+//    // open_curly: /\{/,
+//    // close_curly: /}/,
+//    // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
+//    any_but_colon: {match: /[^:]/, lineBreaks: true}, // non-greedy
+//});
 
 // https://github.com/no-context/moo/issues/64
 // const itt = require('itt')
@@ -60,7 +65,7 @@ const lexer = moo.compile({
 //   console.log(tok)
 // }
 var grammar = {
-    Lexer: lexer,
+    Lexer: undefined,
     ParserRules: [
     {"name": "_$ebnf$1", "symbols": []},
     {"name": "_$ebnf$1", "symbols": ["_$ebnf$1", "wschar"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
@@ -94,18 +99,14 @@ var grammar = {
             return d.join("");
         }
         },
-    {"name": "test", "symbols": [(lexer.has("EOF") ? {type: "EOF"} : EOF)], "postprocess": (d) => _trace(d, d=>d, "test")},
-    {"name": "test", "symbols": [(lexer.has("colon_2plus") ? {type: "colon_2plus"} : colon_2plus), "markup_def", "test"], "postprocess": (d) => _trace(d, d=>d, "test")},
-    {"name": "test", "symbols": [(lexer.has("any_but_2xcolon") ? {type: "any_but_2xcolon"} : any_but_2xcolon), "test"], "postprocess": (d) => _trace(d, d=>d, "test")},
-    {"name": "test", "symbols": [(lexer.has("any_but_2xcolon") ? {type: "any_but_2xcolon"} : any_but_2xcolon), (lexer.has("colon") ? {type: "colon"} : colon), "test"], "postprocess": (d) => _trace(d, d=>d, "test")},
-    {"name": "test", "symbols": [(lexer.has("colon") ? {type: "colon"} : colon), "test"], "postprocess": (d) => _trace(d, d=>d, "test")},
     {"name": "line", "symbols": ["plaintext"], "postprocess": (d) => _trace(d, d=>d, "line plainline")},
     {"name": "line", "symbols": ["markup_line"], "postprocess": (d) => _trace(d, d=>d, "line markup_line")},
     {"name": "line", "symbols": ["plaintext", {"literal":":"}, "plaintext"], "postprocess": (d) => _trace(d, d=>[d.join("")], "line plainline : plainline")},
     {"name": "markup_line", "symbols": ["colons", "markup_def"], "postprocess": (d) => _trace(d, d=>d[1], "markup_line")},
+    {"name": "colons$string$1", "symbols": [{"literal":":"}, {"literal":":"}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "colons$ebnf$1", "symbols": []},
     {"name": "colons$ebnf$1", "symbols": ["colons$ebnf$1", {"literal":":"}], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "colons", "symbols": [{"literal":"::"}, "colons$ebnf$1"]},
+    {"name": "colons", "symbols": ["colons$string$1", "colons$ebnf$1"]},
     {"name": "markup_def", "symbols": ["markup_kw", {"literal":"{"}, "_", "markup_attrs", {"literal":"}"}], "postprocess": (d) => _trace(d, d=>renderMarkup(d[0], d[3]), "markup_def")},
     {"name": "markup_attrs$ebnf$1", "symbols": []},
     {"name": "markup_attrs$ebnf$1", "symbols": ["markup_attrs$ebnf$1", "markup_attr"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
@@ -123,7 +124,7 @@ var grammar = {
     {"name": "plaintext$ebnf$1", "symbols": ["plaintext$ebnf$1", /[^:]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "plaintext", "symbols": ["plaintext$ebnf$1"], "postprocess": (d) => _trace(d, d=>idjoiner(d), "plaintext")}
 ]
-  , ParserStart: "test"
+  , ParserStart: "line"
 }
 if (typeof module !== 'undefined'&& typeof module.exports !== 'undefined') {
    module.exports = grammar;

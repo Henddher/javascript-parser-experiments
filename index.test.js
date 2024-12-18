@@ -15,22 +15,22 @@ describe("parse plaintext", () => {
         res = parse("plaintext");
         expect(res).toEqual("plaintext");
     });
-    // test("plaintext:", () => {
-    //     res = parse("plaintext:");
-    //     expect(res).toEqual("plaintext:");
-    // });
+    test("plaintext:", () => {
+        res = parse("plaintext:");
+        expect(res).toEqual("plaintext:");
+    });
     test(":plaintext", () => {
         res = parse(":plaintext");
         expect(res).toEqual(":plaintext");
     });
-    // test("plain:text", () => {
-    //     res = parse("plain:text");
-    //     expect(res).toEqual("plain:text");
-    // });
-    // test(":plaintext:", () => {
-    //     res = parse(":plaintext:");
-    //     expect(res).toEqual(":plaintext:");
-    // });
+    test("plain:text", () => {
+        res = parse("plain:text");
+        expect(res).toEqual("plain:text");
+    });
+    test(":plaintext:", () => {
+        res = parse(":plaintext:");
+        expect(res).toEqual(":plaintext:");
+    });
 });
 
 describe("parse unknown markup ::unknown{}", () => {

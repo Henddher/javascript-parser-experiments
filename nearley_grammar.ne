@@ -43,14 +43,19 @@ function renderMarkup(markupKw, markupAttrs) {
     return renderer(attrs);
 }
 
-const moo = require("moo");
-const lexer = moo.compile({
-    // EOF: /$/, // won't compile because it matches empty string
-    EOF: /<EOF>/,
-    colon_2plus: /::/,
-    any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
-    colon: /:/, // one colon (lowest priority)
-});
+//const moo = require("moo");
+//const lexer = moo.compile({
+//    // EOF: /$/, // won't compile because it matches empty string
+//    EOF: /<EOF>/,
+//    colon_2plus: /::/,
+//    // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
+//    // colon: /:/, // one colon (lowest priority)
+//    // markup_kw: /[a-zA-Z0-9-]+/,
+//    // open_curly: /\{/,
+//    // close_curly: /}/,
+//    // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
+//    any_but_colon: {match: /[^:]/, lineBreaks: true}, // non-greedy
+//});
 
 // https://github.com/no-context/moo/issues/64
 // const itt = require('itt')
@@ -60,7 +65,7 @@ const lexer = moo.compile({
 // }
 %}
 
-@lexer lexer
+# @lexer lexer
 
 # all -> text all # ❌ (no results)
 # text -> [^:]
@@ -110,20 +115,52 @@ const lexer = moo.compile({
 #     | %any_but_2xcolon %colon %any_but_2xcolon test {% (d) => _trace(d, d=>d, "test") %}
 #     | %any_but_2xcolon test {% (d) => _trace(d, d=>d, "test") %}
 
-test -> %EOF {% (d) => _trace(d, d=>d, "test") %} # ❌ (no ambiguity. <EOF> must be fed) fails with plaintext:, plain:text and :plaintext:
-    | %colon_2plus markup_def test {% (d) => _trace(d, d=>d, "test") %}
-    | %any_but_2xcolon test {% (d) => _trace(d, d=>d, "test") %}
-    | %any_but_2xcolon %colon test {% (d) => _trace(d, d=>d, "test") %}
-    | %colon test {% (d) => _trace(d, d=>d, "test") %}
+# test -> %EOF {% (d) => _trace(d, d=>d, "test") %} # ❌ syntax error on 2nd letter
+#     # | %colon_2plus markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
+#     | %any_but_colon {% (d) => _trace(d, d=>d, "test") %}
+#     # | %colon {% (d) => _trace(d, d=>d, "test") %}
+
+# test -> %EOF {% (d) => _trace(d, d=>d, "test") %} # ❌ syntax error on 1st letter
+#     # | %colon_2plus markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
+#     | test %any_but_colon {% (d) => _trace(d, d=>d, "test") %}
+#     # | %colon {% (d) => _trace(d, d=>d, "test") %}
+
+# test -> %EOF {% (d) => _trace(d, d=>d, "test") %} # ✅ no ambiguity, lexer error on :
+#     # | %colon_2plus markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
+#     | %any_but_colon:+ {% (d) => _trace(d, d=>d, "test") %}
+#     # | %colon {% (d) => _trace(d, d=>d, "test") %}
+
+# test -> %EOF {% (d) => _trace(d, d=>d, "test") %} # ✅ no ambiguity, lexer error on :
+#     # | %colon_2plus markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
+#     | %any_but_colon:+ {% (d) => _trace(d, d=>d, "test") %}
+#     | %any_but_colon:+ %colon {% (d) => _trace(d, d=>d, "test") %}
+#     # | %colon {% (d) => _trace(d, d=>d, "test") %}
+
+# test -> %EOF {% (d) => _trace(d, d=>d, "test") %} # ❌ ambiguity
+#     # | %colon_2plus markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
+#     | %any_but_colon:+ {% (d) => _trace(d, d=>d, "test") %}
+#     | test %any_but_colon:+ {% (d) => _trace(d, d=>d, "test") %}
+#     | %colon {% (d) => _trace(d, d=>d, "test") %}
+
+# test -> %EOF {% (d) => _trace(d, d=>d, "test") %} # ❌ no results
+#     # | %colon_2plus markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
+#     | plain test {% (d) => _trace(d, d=>d, "test") %}
+#     | ":" {% (d) => _trace(d, d=>d, "test") %}
+# plain -> %any_but_colon:+
 
 # --- 
 
 # Don't use @lexer (w/ and w/o EOF)
 # Use moo's error (with token?)
 
-line -> plaintext {% (d) => _trace(d, d=>d, "line plainline") %}
+line -> plaintext {% (d) => _trace(d, d=>d, "line plainline") %} # ✅ok ✅plain:text ❌plaintext: ❌:plaintext
     | markup_line {% (d) => _trace(d, d=>d, "line markup_line") %}
     | plaintext ":" plaintext {% (d) => _trace(d, d=>[d.join("")], "line plainline : plainline") %}
+    # | ":" line {% (d) => _trace(d, d=>d, "line :") %}
+
+# line -> plaintext {% (d) => _trace(d, d=>d, "line plainline") %}
+#     | markup_line {% (d) => _trace(d, d=>d, "line markup_line") %}
+#     | plaintext ":" line {% (d) => _trace(d, d=>[d.join("")], "line plainline : plainline") %}
     # | ":" line {% (d) => _trace(d, d=>d, "line :") %}
 
 markup_line -> colons markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
