@@ -2,7 +2,8 @@ const nearley = require("nearley");
 const grammar = require("./nearley_grammar.js");
 
 const ALLOW_AMBIGUOUS_GRAMMAR = false;
-const FEED_EOF = true;
+const FEED_EOF = false;
+const EOF = "<EOF>";
 
 function nearleyParseInner(text) {
     if (!text) return { text: "" };
@@ -39,7 +40,7 @@ function nearleyParseInner(text) {
             if (parser.results.length == 0) {
                 --attempts;
                 if (FEED_EOF) {
-                    parser.feed("<EOF>"); // TODO: Try using grammar to get the %EOF token from Moo or const in another .js file @imported into grammar
+                    parser.feed(EOF); // TODO: Try using grammar to get the %EOF token from Moo or const in another .js file @imported into grammar
                 }
                 error = "No results";
             } else if (parser.results.length == 1) { // TODO: Remove this block when EOF is addressed
@@ -84,7 +85,7 @@ function nearleyParseInner(text) {
 
 function nearleyParse(text) {
     res = nearleyParseInner(text);
-    return res?.error || res.text.slice(0, -"<EOF>".length); // TODO: Refact to use const
+    return res?.error || (FEED_EOF ? res.text.slice(0, -EOF.length) : res.text);
 }
 
 module.exports = { nearleyParseInner, nearleyParse }
