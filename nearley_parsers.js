@@ -45,7 +45,7 @@ function nearleyParseInner(text) {
                 error = "No results";
             } else if (parser.results.length == 1) { // TODO: Remove this block when EOF is addressed
                 return {
-                    text: parser.results[0].flat(Infinity).join("").trim()
+                    text: parser.results[0].flat(Infinity).join("")
                 };
             } else {
                 error = `Ambiguous grammar. Found ${parser.results.length} results`;

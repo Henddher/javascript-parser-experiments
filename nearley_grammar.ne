@@ -64,7 +64,7 @@ const lexer = moo.compile({
     // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
     // any_but_colon: {match: /[^:]/, lineBreaks: true}, // non-greedy
     any_but_colon: {match: /[^:]/, lineBreaks: true},
-    any: {match: /./, lineBreaks: true},
+    // any: {match: /./, lineBreaks: true},
 });
 
 // https://github.com/no-context/moo/issues/64
@@ -194,6 +194,7 @@ const lexer = moo.compile({
 #     # | ":" line {% (d) => _trace(d, d=>d, "line :") %}
 
 content -> markup_line {% (d) => _trace(d, d=>d, "markup_line") %}
+    | %any_but_colon:+ {% (d) => _trace(d, d=>d, "markup_line") %}
 
 markup_line -> colons markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
 

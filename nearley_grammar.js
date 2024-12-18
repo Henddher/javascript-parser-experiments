@@ -65,7 +65,7 @@ const lexer = moo.compile({
     // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
     // any_but_colon: {match: /[^:]/, lineBreaks: true}, // non-greedy
     any_but_colon: {match: /[^:]/, lineBreaks: true},
-    any: {match: /./, lineBreaks: true},
+    // any: {match: /./, lineBreaks: true},
 });
 
 // https://github.com/no-context/moo/issues/64
@@ -110,6 +110,9 @@ var grammar = {
         }
         },
     {"name": "content", "symbols": ["markup_line"], "postprocess": (d) => _trace(d, d=>d, "markup_line")},
+    {"name": "content$ebnf$1", "symbols": [(lexer.has("any_but_colon") ? {type: "any_but_colon"} : any_but_colon)]},
+    {"name": "content$ebnf$1", "symbols": ["content$ebnf$1", (lexer.has("any_but_colon") ? {type: "any_but_colon"} : any_but_colon)], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "content", "symbols": ["content$ebnf$1"], "postprocess": (d) => _trace(d, d=>d, "markup_line")},
     {"name": "markup_line", "symbols": ["colons", "markup_def"], "postprocess": (d) => _trace(d, d=>d[1], "markup_line")},
     {"name": "colons$ebnf$1", "symbols": []},
     {"name": "colons$ebnf$1", "symbols": ["colons$ebnf$1", {"literal":":"}], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
