@@ -3,14 +3,22 @@
 (function () {
 function id(x) { return x[0]; }
 
+let DEBUG = false;
+
 // TODO: change order of params and put 'tag' first, default `callback=(d)=>d`
 // so `_trace(tag)`. Use Function.bind
 function _trace(d, callback, tag="") {
-    console.log(`<<<< ${tag}`);
-    console.log(JSON.stringify(d, null, 2));
+    let log = () => {};
+
+    if (DEBUG) {
+        log = console.log
+    }
+
+    log(`<<<< ${tag}`);
+    log(JSON.stringify(d, null, 2));
     let res = callback(d);
-    console.log(">>>>");
-    console.log(JSON.stringify(res, null, 2));
+    log(">>>>");
+    log(JSON.stringify(res, null, 2));
     return res;
 }
 
@@ -44,19 +52,21 @@ function renderMarkup(markupKw, markupAttrs) {
     return renderer(attrs);
 }
 
-//const moo = require("moo");
-//const lexer = moo.compile({
-//    // EOF: /$/, // won't compile because it matches empty string
-//    EOF: /<EOF>/,
-//    colon_2plus: /::/,
-//    // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
-//    // colon: /:/, // one colon (lowest priority)
-//    // markup_kw: /[a-zA-Z0-9-]+/,
-//    // open_curly: /\{/,
-//    // close_curly: /}/,
-//    // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
-//    any_but_colon: {match: /[^:]/, lineBreaks: true}, // non-greedy
-//});
+const moo = require("moo");
+const lexer = moo.compile({
+    // EOF: /$/, // won't compile because it matches empty string
+    // EOF: /<EOF>/,
+    colon2x: /::/,
+    // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
+    // colon: /:/, // one colon (lowest priority)
+    // markup_kw: /[a-zA-Z0-9-]+/,
+    // open_curly: /\{/,
+    // close_curly: /}/,
+    // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
+    // any_but_colon: {match: /[^:]/, lineBreaks: true}, // non-greedy
+    any_but_colon: {match: /[^:]/, lineBreaks: true},
+    any: {match: /./, lineBreaks: true},
+});
 
 // https://github.com/no-context/moo/issues/64
 // const itt = require('itt')
@@ -65,7 +75,7 @@ function renderMarkup(markupKw, markupAttrs) {
 //   console.log(tok)
 // }
 var grammar = {
-    Lexer: undefined,
+    Lexer: lexer,
     ParserRules: [
     {"name": "_$ebnf$1", "symbols": []},
     {"name": "_$ebnf$1", "symbols": ["_$ebnf$1", "wschar"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
@@ -99,13 +109,11 @@ var grammar = {
             return d.join("");
         }
         },
-    {"name": "line", "symbols": ["plaintext"], "postprocess": (d) => _trace(d, d=>d, "line plainline")},
-    {"name": "line", "symbols": ["markup_line"], "postprocess": (d) => _trace(d, d=>d, "line markup_line")},
-    {"name": "line", "symbols": ["line", {"literal":":"}, "plaintext"], "postprocess": (d) => _trace(d, d=>d, "line plainline : plainline")},
+    {"name": "content", "symbols": ["markup_line"], "postprocess": (d) => _trace(d, d=>d, "markup_line")},
     {"name": "markup_line", "symbols": ["colons", "markup_def"], "postprocess": (d) => _trace(d, d=>d[1], "markup_line")},
     {"name": "colons$ebnf$1", "symbols": []},
     {"name": "colons$ebnf$1", "symbols": ["colons$ebnf$1", {"literal":":"}], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "colons", "symbols": [{"literal":":"}, {"literal":":"}, "colons$ebnf$1"]},
+    {"name": "colons", "symbols": [{"literal":"::"}, "colons$ebnf$1"]},
     {"name": "markup_def", "symbols": ["markup_kw", {"literal":"{"}, "_", "markup_attrs", {"literal":"}"}], "postprocess": (d) => _trace(d, d=>renderMarkup(d[0], d[3]), "markup_def")},
     {"name": "markup_attrs$ebnf$1", "symbols": []},
     {"name": "markup_attrs$ebnf$1", "symbols": ["markup_attrs$ebnf$1", "markup_attr"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
@@ -123,7 +131,7 @@ var grammar = {
     {"name": "plaintext$ebnf$1", "symbols": ["plaintext$ebnf$1", /[^:]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "plaintext", "symbols": ["plaintext$ebnf$1"], "postprocess": (d) => _trace(d, d=>idjoiner(d), "plaintext")}
 ]
-  , ParserStart: "line"
+  , ParserStart: "content"
 }
 if (typeof module !== 'undefined'&& typeof module.exports !== 'undefined') {
    module.exports = grammar;

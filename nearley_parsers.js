@@ -25,7 +25,7 @@ function nearleyParseInner(text) {
         // Another option is to catch the exception from `parser.results[0]`
         // and re-raise as EOF like it was done here:
         // https://github.com/penrose/penrose/pull/510/files
-        parser.feed(` ${text} `);
+        parser.feed(text);
 
         // if (parser.results.length == 1) {
         //     return {

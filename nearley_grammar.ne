@@ -2,14 +2,22 @@
 @builtin "string.ne"
 
 @{%
+let DEBUG = false;
+
 // TODO: change order of params and put 'tag' first, default `callback=(d)=>d`
 // so `_trace(tag)`. Use Function.bind
 function _trace(d, callback, tag="") {
-    console.log(`<<<< ${tag}`);
-    console.log(JSON.stringify(d, null, 2));
+    let log = () => {};
+
+    if (DEBUG) {
+        log = console.log
+    }
+
+    log(`<<<< ${tag}`);
+    log(JSON.stringify(d, null, 2));
     let res = callback(d);
-    console.log(">>>>");
-    console.log(JSON.stringify(res, null, 2));
+    log(">>>>");
+    log(JSON.stringify(res, null, 2));
     return res;
 }
 
@@ -43,19 +51,21 @@ function renderMarkup(markupKw, markupAttrs) {
     return renderer(attrs);
 }
 
-//const moo = require("moo");
-//const lexer = moo.compile({
-//    // EOF: /$/, // won't compile because it matches empty string
-//    EOF: /<EOF>/,
-//    colon_2plus: /::/,
-//    // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
-//    // colon: /:/, // one colon (lowest priority)
-//    // markup_kw: /[a-zA-Z0-9-]+/,
-//    // open_curly: /\{/,
-//    // close_curly: /}/,
-//    // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
-//    any_but_colon: {match: /[^:]/, lineBreaks: true}, // non-greedy
-//});
+const moo = require("moo");
+const lexer = moo.compile({
+    // EOF: /$/, // won't compile because it matches empty string
+    // EOF: /<EOF>/,
+    colon2x: /::/,
+    // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
+    // colon: /:/, // one colon (lowest priority)
+    // markup_kw: /[a-zA-Z0-9-]+/,
+    // open_curly: /\{/,
+    // close_curly: /}/,
+    // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
+    // any_but_colon: {match: /[^:]/, lineBreaks: true}, // non-greedy
+    any_but_colon: {match: /[^:]/, lineBreaks: true},
+    any: {match: /./, lineBreaks: true},
+});
 
 // https://github.com/no-context/moo/issues/64
 // const itt = require('itt')
@@ -65,7 +75,7 @@ function renderMarkup(markupKw, markupAttrs) {
 // }
 %}
 
-# @lexer lexer
+@lexer lexer
 
 # all -> text all # ❌ (no results)
 # text -> [^:]
@@ -178,15 +188,16 @@ function renderMarkup(markupKw, markupAttrs) {
 #     | plaintext ":" plaintext {% (d) => _trace(d, d=>[d.join("")], "line plainline : plainline") %}
 #     # | ":" line {% (d) => _trace(d, d=>d, "line :") %}
 
-line -> plaintext {% (d) => _trace(d, d=>d, "line plainline") %} # ✅plaintext ❌::?? because of plaintext
-    | markup_line {% (d) => _trace(d, d=>d, "line markup_line") %}
-    | line ":" plaintext {% (d) => _trace(d, d=>d, "line plainline : plainline") %}
-    # | ":" line {% (d) => _trace(d, d=>d, "line :") %}
+# line -> plaintext {% (d) => _trace(d, d=>d, "line plainline") %} # ✅plaintext ❌::?? because of plaintext
+#     | markup_line {% (d) => _trace(d, d=>d, "line markup_line") %}
+#     | line ":" plaintext {% (d) => _trace(d, d=>d, "line plainline : plainline") %}
+#     # | ":" line {% (d) => _trace(d, d=>d, "line :") %}
 
+content -> markup_line {% (d) => _trace(d, d=>d, "markup_line") %}
 
 markup_line -> colons markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
 
-colons -> ":" ":" ":":*
+colons -> "::" ":":*
 
 markup_def -> markup_kw "{" _ markup_attrs "}" {% (d) => _trace(d, d=>renderMarkup(d[0], d[3]), "markup_def") %}
 
