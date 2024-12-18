@@ -201,7 +201,7 @@ content -> markup_line {% (d) => _trace(d, d=>d, "markup_line") %}
 markup_line -> %colon2x markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
 # markup_pad -> ":":+
 
-colons -> "::":+
+# colons -> "::":+
 
 markup_def -> markup_kw "{" _ markup_attrs "}" {% (d) => _trace(d, d=>renderMarkup(d[0], d[3]), "markup_def") %}
 
