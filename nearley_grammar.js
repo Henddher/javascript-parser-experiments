@@ -115,6 +115,7 @@ var grammar = {
     {"name": "content$ebnf$2", "symbols": []},
     {"name": "content$ebnf$2", "symbols": ["content$ebnf$2", {"literal":":"}], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "content", "symbols": ["content$ebnf$1", "content$ebnf$2"], "postprocess": (d) => _trace(d, d=>d, "markup_line")},
+    {"name": "content", "symbols": [{"literal":":"}, "content"], "postprocess": (d) => _trace(d, d=>d, "markup_line")},
     {"name": "markup_line", "symbols": [(lexer.has("colon2x") ? {type: "colon2x"} : colon2x), "markup_def"], "postprocess": (d) => _trace(d, d=>d[1], "markup_line")},
     {"name": "markup_def", "symbols": ["markup_kw", {"literal":"{"}, "_", "markup_attrs", {"literal":"}"}], "postprocess": (d) => _trace(d, d=>renderMarkup(d[0], d[3]), "markup_def")},
     {"name": "markup_attrs$ebnf$1", "symbols": []},

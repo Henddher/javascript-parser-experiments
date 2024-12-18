@@ -197,6 +197,11 @@ content -> markup_line {% (d) => _trace(d, d=>d, "markup_line") %}
     | %any_but_colon:+ ":":* {% (d) => _trace(d, d=>d, "markup_line") %}
     # | ":" {% (d) => _trace(d, d=>d, "markup_line") %}
     # | markup_pad {% (d) => _trace(d, d=>d, "markup_line") %}
+    # | %any_but_colon:+ ":":* %any_but_colon {% (d) => _trace(d, d=>d, "markup_line") %} # loops
+    # | content ":":* %any_but_colon {% (d) => _trace(d, d=>d, "markup_line") %} # loops
+    # | ":":* %any_but_colon {% (d) => _trace(d, d=>d, "markup_line") %} # does nothing
+    # | ":":+ %any_but_colon {% (d) => _trace(d, d=>d, "markup_line") %} # does nothing
+    | ":" content {% (d) => _trace(d, d=>d, "markup_line") %}
 
 markup_line -> %colon2x markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
 # markup_pad -> ":":+
