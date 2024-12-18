@@ -178,9 +178,9 @@ function renderMarkup(markupKw, markupAttrs) {
 #     | plaintext ":" plaintext {% (d) => _trace(d, d=>[d.join("")], "line plainline : plainline") %}
 #     # | ":" line {% (d) => _trace(d, d=>d, "line :") %}
 
-line -> plaintext {% (d) => _trace(d, d=>d, "line plainline") %} # ✅✅✅
+line -> plaintext {% (d) => _trace(d, d=>d, "line plainline") %} # ✅plaintext ❌::?? because of plaintext
     | markup_line {% (d) => _trace(d, d=>d, "line markup_line") %}
-    | line ":" plaintext {% (d) => _trace(d, d=>[d.join("")], "line plainline : plainline") %}
+    | line ":" plaintext {% (d) => _trace(d, d=>d, "line plainline : plainline") %}
     # | ":" line {% (d) => _trace(d, d=>d, "line :") %}
 
 
