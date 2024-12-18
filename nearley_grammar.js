@@ -58,7 +58,7 @@ const lexer = moo.compile({
     // EOF: /<EOF>/,
     colon2x: /::/,
     // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
-    // colon: /:/, // one colon (lowest priority)
+    colon: /:/, // one colon
     // markup_kw: /[a-zA-Z0-9-]+/,
     // open_curly: /\{/,
     // close_curly: /}/,
@@ -112,11 +112,13 @@ var grammar = {
     {"name": "content", "symbols": ["markup_line"], "postprocess": (d) => _trace(d, d=>d, "markup_line")},
     {"name": "content$ebnf$1", "symbols": [(lexer.has("any_but_colon") ? {type: "any_but_colon"} : any_but_colon)]},
     {"name": "content$ebnf$1", "symbols": ["content$ebnf$1", (lexer.has("any_but_colon") ? {type: "any_but_colon"} : any_but_colon)], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "content", "symbols": ["content$ebnf$1"], "postprocess": (d) => _trace(d, d=>d, "markup_line")},
-    {"name": "markup_line", "symbols": ["colons", "markup_def"], "postprocess": (d) => _trace(d, d=>d[1], "markup_line")},
-    {"name": "colons$ebnf$1", "symbols": []},
-    {"name": "colons$ebnf$1", "symbols": ["colons$ebnf$1", {"literal":":"}], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "colons", "symbols": [{"literal":"::"}, "colons$ebnf$1"]},
+    {"name": "content$ebnf$2", "symbols": []},
+    {"name": "content$ebnf$2", "symbols": ["content$ebnf$2", {"literal":":"}], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "content", "symbols": ["content$ebnf$1", "content$ebnf$2"], "postprocess": (d) => _trace(d, d=>d, "markup_line")},
+    {"name": "markup_line", "symbols": [(lexer.has("colon2x") ? {type: "colon2x"} : colon2x), "markup_def"], "postprocess": (d) => _trace(d, d=>d[1], "markup_line")},
+    {"name": "colons$ebnf$1", "symbols": [{"literal":"::"}]},
+    {"name": "colons$ebnf$1", "symbols": ["colons$ebnf$1", {"literal":"::"}], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "colons", "symbols": ["colons$ebnf$1"]},
     {"name": "markup_def", "symbols": ["markup_kw", {"literal":"{"}, "_", "markup_attrs", {"literal":"}"}], "postprocess": (d) => _trace(d, d=>renderMarkup(d[0], d[3]), "markup_def")},
     {"name": "markup_attrs$ebnf$1", "symbols": []},
     {"name": "markup_attrs$ebnf$1", "symbols": ["markup_attrs$ebnf$1", "markup_attr"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},

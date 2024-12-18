@@ -57,7 +57,7 @@ const lexer = moo.compile({
     // EOF: /<EOF>/,
     colon2x: /::/,
     // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
-    // colon: /:/, // one colon (lowest priority)
+    colon: /:/, // one colon
     // markup_kw: /[a-zA-Z0-9-]+/,
     // open_curly: /\{/,
     // close_curly: /}/,
@@ -194,11 +194,14 @@ const lexer = moo.compile({
 #     # | ":" line {% (d) => _trace(d, d=>d, "line :") %}
 
 content -> markup_line {% (d) => _trace(d, d=>d, "markup_line") %}
-    | %any_but_colon:+ {% (d) => _trace(d, d=>d, "markup_line") %}
+    | %any_but_colon:+ ":":* {% (d) => _trace(d, d=>d, "markup_line") %}
+    # | ":" {% (d) => _trace(d, d=>d, "markup_line") %}
+    # | markup_pad {% (d) => _trace(d, d=>d, "markup_line") %}
 
-markup_line -> colons markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
+markup_line -> %colon2x markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
+# markup_pad -> ":":+
 
-colons -> "::" ":":*
+colons -> "::":+
 
 markup_def -> markup_kw "{" _ markup_attrs "}" {% (d) => _trace(d, d=>renderMarkup(d[0], d[3]), "markup_def") %}
 
