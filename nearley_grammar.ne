@@ -91,7 +91,7 @@ all ->
     | all colons_etc {% (d) => _trace(d, d=>d, "trace") %}
 
 colons_etc -> 
-    %colons2xplus __ {% (d) => _trace(d, d=>d, "trace") %}
+    %colons2xplus __ {% (d) => _trace(d, d=>null, "null") %}
     | %colons2xplus markup_def {% (d) => _trace(d, d=>d[1], "markup") %}
 
 end -> %EOF

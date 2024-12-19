@@ -98,7 +98,7 @@ var grammar = {
     {"name": "all", "symbols": ["all", {"literal":":"}], "postprocess": (d) => _trace(d, d=>d, "trace")},
     {"name": "all", "symbols": ["colons_etc"], "postprocess": (d) => _trace(d, d=>d, "trace")},
     {"name": "all", "symbols": ["all", "colons_etc"], "postprocess": (d) => _trace(d, d=>d, "trace")},
-    {"name": "colons_etc", "symbols": [(lexer.has("colons2xplus") ? {type: "colons2xplus"} : colons2xplus), "__"], "postprocess": (d) => _trace(d, d=>d, "trace")},
+    {"name": "colons_etc", "symbols": [(lexer.has("colons2xplus") ? {type: "colons2xplus"} : colons2xplus), "__"], "postprocess": (d) => _trace(d, d=>null, "null")},
     {"name": "colons_etc", "symbols": [(lexer.has("colons2xplus") ? {type: "colons2xplus"} : colons2xplus), "markup_def"], "postprocess": (d) => _trace(d, d=>d[1], "markup")},
     {"name": "end", "symbols": [(lexer.has("EOF") ? {type: "EOF"} : EOF)]},
     {"name": "markup_def", "symbols": ["markup_kw", {"literal":"{"}, "_", "markup_attrs", {"literal":"}"}], "postprocess": (d) => _trace(d, d=>renderMarkup(d[0], d[3]), "markup_def")},

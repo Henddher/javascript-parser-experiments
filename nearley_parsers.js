@@ -2,7 +2,7 @@ const nearley = require("nearley");
 const grammar = require("./nearley_grammar.js");
 
 const ALLOW_AMBIGUOUS_GRAMMAR = false;
-const FEED_EOF_IF_NEEDED = true;
+const FEED_EOF_IF_NEEDED = false;
 const EOF = "<EOF>"; // Must match token in grammar
 
 function _patch(res, patch) {
@@ -34,7 +34,6 @@ function nearleyParseInner(text) {
         // https://github.com/penrose/penrose/pull/510/files
 
         parser.feed(text);
-        // parser.feed(` ${text} `);
 
         // Depending on the grammar, we might be stuck in a rule
         // waiting for more chars (e.g. missing closing block).
@@ -99,11 +98,24 @@ function _eofTail(text) {
     return `...${text.slice(-2*EOF.length, -EOF.length)}[${text.slice(-EOF.length)}]`
 }
 
+// function *_wrapText(text) {
+//     yield " ";
+//     yield text;
+//     yield " ";
+// }
+
+function _wrapText(text) {
+    return ` ${text} `;
+}
+
 function nearleyParse(text, ctx={}) {
-    let res = nearleyParseInner(text);
-    if (res.eofWasFed && res.text) {
-        console.warn("<EOF> tail removed.", _eofTail(text));
-        res.text = res.text.slice(-EOF.length);
+    let res = nearleyParseInner(_wrapText(text));
+    if (res.text) {
+        res.text = res.text.trim();
+        if (res.eofWasFed) {
+            console.warn("<EOF> tail removed.", _eofTail(text));
+            res.text = res.text.slice(-EOF.length);
+        }
     }
     ctx.res = res;
     return res?.error || res.text;

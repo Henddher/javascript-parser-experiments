@@ -35,9 +35,9 @@ describe("parse plaintext", () => {
         res = parse("plain:te:xt");
         expect(res).toEqual("plain:te:xt");
     });
-    test("plain:te:xt\n\n", () => {
+    test("plain:te:xt<newline><newline>", () => {
         res = parse("plain:te:xt\n\n");
-        expect(res).toEqual("plain:te:xt\n\n");
+        expect(res).toEqual("plain:te:xt");
     });
 });
 
@@ -106,6 +106,7 @@ describe("return 'parse error' with invalid markup", () => {
 
 describe("ignore ::+", () => {
     let ctx = {};
+    // TODO: Add tests with EOF (\n at the end) AND tests that make parser inject EOF)
     test(":: is allowed and gets skipped", () => {
         res = parse("::", ctx);
         expect(res).toEqual("");
@@ -150,11 +151,11 @@ describe("parse ::quoted-text{}", () => {
     });
     test("::quoted-text{author='Hamlet'}", () => {
         res = parse("::quoted-text{author='Hamlet'}");
-        expect(res).toEqual(" - by Hamlet");
+        expect(res).toEqual("- by Hamlet");
     });
     test("::quoted-text{quote='To be or not to be ...'}", () => {
         res = parse("::quoted-text{quote='To be or not to be ...'}");
-        expect(res).toEqual("To be or not to be ... - by ");
+        expect(res).toEqual("To be or not to be ... - by");
     });
     test("::quoted-text{author='Hamlet' quote='To be or not to be ...'}", () => {
         res = parse("::quoted-text{author='Hamlet' quote='To be or not to be ...'}");
