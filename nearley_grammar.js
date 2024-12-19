@@ -54,7 +54,7 @@ const moo = require("moo");
 const lexer = moo.compile({
     // EOF: /$/, // won't compile because it matches empty string
     // EOF: /<EOF>/,
-    EOF: /EOF/, // Must match const in parsers (TODO: move both to another .js file)
+    EOF: /<EOF>/, // Must match const in parsers (TODO: move both to another .js file)
     colon2x: /::/,
     // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
     colon: /:/, // one colon
@@ -109,6 +109,7 @@ var grammar = {
             return d.join("");
         }
         },
+    {"name": "content", "symbols": [(lexer.has("EOF") ? {type: "EOF"} : EOF)], "postprocess": (d) => _trace(d, d=>d, "trace")},
     {"name": "content", "symbols": [(lexer.has("any_but_colon") ? {type: "any_but_colon"} : any_but_colon)], "postprocess": (d) => _trace(d, d=>d, "trace")},
     {"name": "content", "symbols": ["content", (lexer.has("any_but_colon") ? {type: "any_but_colon"} : any_but_colon)], "postprocess": (d) => _trace(d, d=>d, "trace")},
     {"name": "content", "symbols": [{"literal":":"}], "postprocess": (d) => _trace(d, d=>d, "trace")},
@@ -121,7 +122,8 @@ var grammar = {
     {"name": "colons$ebnf$2", "symbols": ["colons"], "postprocess": id},
     {"name": "colons$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "colons", "symbols": [(lexer.has("colon2x") ? {type: "colon2x"} : colon2x), "colons$ebnf$2"], "postprocess": (d) => _trace(d, d=>d, "trace")},
-    {"name": "colons", "symbols": ["colons", "end"]},
+    {"name": "colons", "symbols": ["colons", "end"], "postprocess": (d) => _trace(d, d=>d, "trace")},
+    {"name": "colons", "symbols": ["end"], "postprocess": (d) => _trace(d, d=>d, "trace")},
     {"name": "end", "symbols": [(lexer.has("EOF") ? {type: "EOF"} : EOF)]},
     {"name": "markup_line", "symbols": ["markup_def"], "postprocess": (d) => _trace(d, d=>d[0], "markup_line")},
     {"name": "markup_def", "symbols": ["markup_kw", {"literal":"{"}, "_", "markup_attrs", {"literal":"}"}], "postprocess": (d) => _trace(d, d=>renderMarkup(d[0], d[3]), "markup_def")},

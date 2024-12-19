@@ -3,7 +3,7 @@ const grammar = require("./nearley_grammar.js");
 
 const ALLOW_AMBIGUOUS_GRAMMAR = false;
 const FEED_EOF_IF_NEEDED = true;
-const EOF = "EOF"; // Must match token in grammar
+const EOF = "<EOF>"; // Must match token in grammar
 
 function _patch(res, patch) {
     return Object.assign(res, patch);
@@ -47,6 +47,14 @@ function nearleyParseInner(text) {
             let eofWasFed = true;
             _patch(res, {eofWasFed});
         }
+
+        // TODO: Test parser with simple grammar A->aA | EOF to make sure it works.
+        // Feeding "::" into, it wants to resolve a bunch of states after succeeding
+        // identifying it as a %colon2x, and it's questionable if parser remembers
+
+        // TODO: Consider using lexer states when :: is encountered
+        // TODO: understand the difference between literal token and regex token (literal vs value).
+        // the parser is pushing markup_kw
         
         if (parser.results.length == 1) {
             return _patch(res, {

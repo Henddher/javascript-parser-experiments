@@ -53,7 +53,7 @@ const moo = require("moo");
 const lexer = moo.compile({
     // EOF: /$/, // won't compile because it matches empty string
     // EOF: /<EOF>/,
-    EOF: /EOF/, // Must match const in parsers (TODO: move both to another .js file)
+    EOF: /<EOF>/, // Must match const in parsers (TODO: move both to another .js file)
     colon2x: /::/,
     // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
     colon: /:/, // one colon
@@ -78,10 +78,11 @@ const lexer = moo.compile({
 @lexer lexer
 
 content -> 
+    %EOF {% (d) => _trace(d, d=>d, "trace") %}
     # markup_line {% (d) => _trace(d, d=>d, "trace") %}
     # | content markup_line {% (d) => _trace(d, d=>d, "trace") %}
 
-    %any_but_colon {% (d) => _trace(d, d=>d, "trace") %}
+    | %any_but_colon {% (d) => _trace(d, d=>d, "trace") %}
     | content %any_but_colon {% (d) => _trace(d, d=>d, "trace") %}
     
     | ":" {% (d) => _trace(d, d=>d, "trace") %}
@@ -116,11 +117,13 @@ colons_etc ->
 colons -> ":" colons:? {% (d) => _trace(d, d=>d, "trace") %}
     | %colon2x colons:? {% (d) => _trace(d, d=>d, "trace") %}
     # | colons _ {% (d) => _trace(d, d=>d, "trace") %} # ❌⏳
-    | colons end
+    | colons end {% (d) => _trace(d, d=>d, "trace") %}
+    | end {% (d) => _trace(d, d=>d, "trace") %}
 # colons -> ":" (_ colons):? {% (d) => _trace(d, d=>d, "trace") %} # 🤷🏻‍♂️
 #     | %colon2x (_ colons):? {% (d) => _trace(d, d=>d, "trace") %} # 🤷🏻‍♂️
 
 end -> %EOF
+# Maybe add EOF to content rule?
 
 markup_line -> markup_def {% (d) => _trace(d, d=>d[0], "markup_line") %}
 
