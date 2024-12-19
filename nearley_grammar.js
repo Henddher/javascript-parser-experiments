@@ -8,17 +8,15 @@ let DEBUG = false;
 // TODO: change order of params and put 'tag' first, default `callback=(d)=>d`
 // so `_trace(tag)`. Use Function.bind
 function _trace(d, callback, tag="") {
-    let log = () => {};
-
-    if (DEBUG) {
-        log = console.log
+    if (!DEBUG) {
+        return callback(d);
     }
 
-    log(`<<<< ${tag}`);
-    log(JSON.stringify(d, null, 2));
+    console.log(`<<<< ${tag}`);
+    console.log(d);
     let res = callback(d);
-    log(">>>>");
-    log(JSON.stringify(res, null, 2));
+    console.log(">>>>");
+    console.log(res);
     return res;
 }
 
@@ -54,26 +52,11 @@ function renderMarkup(markupKw, markupAttrs) {
 
 const moo = require("moo");
 const lexer = moo.compile({
-    // EOF: /$/, // won't compile because it matches empty string
-    // EOF: /<EOF>/,
-    colon2x: /::/,
-    // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
+    EOF: /<EOF>/, // Must match const in parsers (TODO: move both to another .js file)
+    colons2xplus: /::+/,
     colon: /:/, // one colon
-    // markup_kw: /[a-zA-Z0-9-]+/,
-    // open_curly: /\{/,
-    // close_curly: /}/,
-    // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
-    // any_but_colon: {match: /[^:]/, lineBreaks: true}, // non-greedy
     any_but_colon: {match: /[^:]/, lineBreaks: true},
-    // any: {match: /./, lineBreaks: true},
 });
-
-// https://github.com/no-context/moo/issues/64
-// const itt = require('itt')
-// const tokens = itt.push({ type: 'eof', value: '<eof>' }, lexer)
-// for (const tok of tokens) {
-//   console.log(tok)
-// }
 var grammar = {
     Lexer: lexer,
     ParserRules: [
@@ -109,13 +92,15 @@ var grammar = {
             return d.join("");
         }
         },
-    {"name": "content", "symbols": ["markup_line"], "postprocess": (d) => _trace(d, d=>d, "trace")},
-    {"name": "content", "symbols": ["content", "markup_line"], "postprocess": (d) => _trace(d, d=>d, "trace")},
-    {"name": "content", "symbols": [(lexer.has("any_but_colon") ? {type: "any_but_colon"} : any_but_colon)], "postprocess": (d) => _trace(d, d=>d, "trace")},
-    {"name": "content", "symbols": ["content", (lexer.has("any_but_colon") ? {type: "any_but_colon"} : any_but_colon)], "postprocess": (d) => _trace(d, d=>d, "trace")},
-    {"name": "content", "symbols": [{"literal":":"}], "postprocess": (d) => _trace(d, d=>d, "trace")},
-    {"name": "content", "symbols": ["content", {"literal":":"}], "postprocess": (d) => _trace(d, d=>d, "trace")},
-    {"name": "markup_line", "symbols": [(lexer.has("colon2x") ? {type: "colon2x"} : colon2x), "markup_def"], "postprocess": (d) => _trace(d, d=>d[1], "markup_line")},
+    {"name": "all", "symbols": [(lexer.has("any_but_colon") ? {type: "any_but_colon"} : any_but_colon)], "postprocess": (d) => _trace(d, d=>d, "trace")},
+    {"name": "all", "symbols": ["all", (lexer.has("any_but_colon") ? {type: "any_but_colon"} : any_but_colon)], "postprocess": (d) => _trace(d, d=>d, "trace")},
+    {"name": "all", "symbols": [{"literal":":"}], "postprocess": (d) => _trace(d, d=>d, "trace")},
+    {"name": "all", "symbols": ["all", {"literal":":"}], "postprocess": (d) => _trace(d, d=>d, "trace")},
+    {"name": "all", "symbols": ["colons_etc"], "postprocess": (d) => _trace(d, d=>d, "trace")},
+    {"name": "all", "symbols": ["all", "colons_etc"], "postprocess": (d) => _trace(d, d=>d, "trace")},
+    {"name": "colons_etc", "symbols": [(lexer.has("colons2xplus") ? {type: "colons2xplus"} : colons2xplus), "__"], "postprocess": (d) => _trace(d, d=>null, "null")},
+    {"name": "colons_etc", "symbols": [(lexer.has("colons2xplus") ? {type: "colons2xplus"} : colons2xplus), "markup_def"], "postprocess": (d) => _trace(d, d=>d[1], "markup")},
+    {"name": "end", "symbols": [(lexer.has("EOF") ? {type: "EOF"} : EOF)]},
     {"name": "markup_def", "symbols": ["markup_kw", {"literal":"{"}, "_", "markup_attrs", {"literal":"}"}], "postprocess": (d) => _trace(d, d=>renderMarkup(d[0], d[3]), "markup_def")},
     {"name": "markup_attrs$ebnf$1", "symbols": []},
     {"name": "markup_attrs$ebnf$1", "symbols": ["markup_attrs$ebnf$1", "markup_attr"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
@@ -133,7 +118,7 @@ var grammar = {
     {"name": "plaintext$ebnf$1", "symbols": ["plaintext$ebnf$1", /[^:]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "plaintext", "symbols": ["plaintext$ebnf$1"], "postprocess": (d) => _trace(d, d=>idjoiner(d), "plaintext")}
 ]
-  , ParserStart: "content"
+  , ParserStart: "all"
 }
 if (typeof module !== 'undefined'&& typeof module.exports !== 'undefined') {
    module.exports = grammar;
