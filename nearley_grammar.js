@@ -52,28 +52,11 @@ function renderMarkup(markupKw, markupAttrs) {
 
 const moo = require("moo");
 const lexer = moo.compile({
-    // EOF: /$/, // won't compile because it matches empty string
-    // EOF: /<EOF>/,
     EOF: /<EOF>/, // Must match const in parsers (TODO: move both to another .js file)
     colons2xplus: /::+/,
-    // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
     colon: /:/, // one colon
-    // markup_kw: /[a-zA-Z0-9-]+/,
-    // open_curly: /\{/,
-    // close_curly: /}/,
-    // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
-    // any_but_colon: {match: /[^:]/, lineBreaks: true}, // non-greedy
     any_but_colon: {match: /[^:]/, lineBreaks: true},
-    // any: {match: /./, lineBreaks: true},
-    // EOF: /.$/, // doesn't work
 });
-
-// https://github.com/no-context/moo/issues/64
-// const itt = require('itt')
-// const tokens = itt.push({ type: 'eof', value: '<eof>' }, lexer)
-// for (const tok of tokens) {
-//   console.log(tok)
-// }
 var grammar = {
     Lexer: lexer,
     ParserRules: [

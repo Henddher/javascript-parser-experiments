@@ -78,7 +78,7 @@ describe("return 'parse error' with invalid markup", () => {
         res = parse("::invalid {}");
         expect(res).toMatch(parseErrorRegex);
     });
-    xtest("::invalid{", () => {
+    test("::invalid{", () => {
         res = parse("::invalid{");
         expect(res).toMatch(parseErrorRegex);
     });
@@ -90,7 +90,7 @@ describe("return 'parse error' with invalid markup", () => {
         res = parse("::invalid{{");
         expect(res).toMatch(parseErrorRegex);
     });
-    xtest("::invalid{a='}", () => {
+    test("::invalid{a='}", () => {
         res = parse("::invalid{a='}");
         expect(res).toMatch(parseErrorRegex);
     });
@@ -104,7 +104,7 @@ describe("return 'parse error' with invalid markup", () => {
     });
 });
 
-xdescribe("ignore ::+", () => {
+describe("ignore ::+", () => {
     let ctx = {};
     test(":: is allowed and gets skipped", () => {
         res = parse("::", ctx);
