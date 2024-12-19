@@ -1,7 +1,7 @@
 const nearley = require("nearley");
 const grammar = require("./nearley_grammar.js");
 
-const ALLOW_AMBIGUOUS_GRAMMAR = true;
+const ALLOW_AMBIGUOUS_GRAMMAR = false;
 const FEED_EOF = false;
 const EOF = "<EOF>";
 
