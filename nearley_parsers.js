@@ -2,8 +2,8 @@ const nearley = require("nearley");
 const grammar = require("./nearley_grammar.js");
 
 const ALLOW_AMBIGUOUS_GRAMMAR = false;
-const FEED_EOF_IF_NEEDED = true;
-const EOF = "EOF"; // Must match token in grammar
+const FEED_EOF_IF_NEEDED = false;
+const EOF = "<EOF>"; // Must match token in grammar
 
 function _patch(res, patch) {
     return Object.assign(res, patch);

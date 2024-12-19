@@ -54,8 +54,8 @@ const moo = require("moo");
 const lexer = moo.compile({
     // EOF: /$/, // won't compile because it matches empty string
     // EOF: /<EOF>/,
-    EOF: /EOF/, // Must match const in parsers (TODO: move both to another .js file)
-    colon2x: /::/,
+    EOF: /<EOF>/, // Must match const in parsers (TODO: move both to another .js file)
+    colons2xplus: /::+/,
     // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
     colon: /:/, // one colon
     // markup_kw: /[a-zA-Z0-9-]+/,
@@ -109,21 +109,15 @@ var grammar = {
             return d.join("");
         }
         },
-    {"name": "content", "symbols": [(lexer.has("any_but_colon") ? {type: "any_but_colon"} : any_but_colon)], "postprocess": (d) => _trace(d, d=>d, "trace")},
-    {"name": "content", "symbols": ["content", (lexer.has("any_but_colon") ? {type: "any_but_colon"} : any_but_colon)], "postprocess": (d) => _trace(d, d=>d, "trace")},
-    {"name": "content", "symbols": [{"literal":":"}], "postprocess": (d) => _trace(d, d=>d, "trace")},
-    {"name": "content", "symbols": ["content", {"literal":":"}], "postprocess": (d) => _trace(d, d=>d, "trace")},
-    {"name": "content", "symbols": ["colons_etc"], "postprocess": (d) => _trace(d, d=>d, "trace")},
-    {"name": "colons_etc", "symbols": ["colons", "markup_line"], "postprocess": (d) => _trace(d, d=>d[1], "trace")},
-    {"name": "colons$ebnf$1", "symbols": ["colons"], "postprocess": id},
-    {"name": "colons$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "colons", "symbols": [{"literal":":"}, "colons$ebnf$1"], "postprocess": (d) => _trace(d, d=>d, "trace")},
-    {"name": "colons$ebnf$2", "symbols": ["colons"], "postprocess": id},
-    {"name": "colons$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "colons", "symbols": [(lexer.has("colon2x") ? {type: "colon2x"} : colon2x), "colons$ebnf$2"], "postprocess": (d) => _trace(d, d=>d, "trace")},
-    {"name": "colons", "symbols": ["colons", "end"]},
+    {"name": "all", "symbols": [(lexer.has("any_but_colon") ? {type: "any_but_colon"} : any_but_colon)], "postprocess": (d) => _trace(d, d=>d, "trace")},
+    {"name": "all", "symbols": ["all", (lexer.has("any_but_colon") ? {type: "any_but_colon"} : any_but_colon)], "postprocess": (d) => _trace(d, d=>d, "trace")},
+    {"name": "all", "symbols": [{"literal":":"}], "postprocess": (d) => _trace(d, d=>d, "trace")},
+    {"name": "all", "symbols": ["all", {"literal":":"}], "postprocess": (d) => _trace(d, d=>d, "trace")},
+    {"name": "all", "symbols": ["colons_etc"], "postprocess": (d) => _trace(d, d=>d, "trace")},
+    {"name": "all", "symbols": ["all", "colons_etc"], "postprocess": (d) => _trace(d, d=>d, "trace")},
+    {"name": "colons_etc", "symbols": [(lexer.has("colons2xplus") ? {type: "colons2xplus"} : colons2xplus), "__"], "postprocess": (d) => _trace(d, d=>d, "trace")},
+    {"name": "colons_etc", "symbols": [(lexer.has("colons2xplus") ? {type: "colons2xplus"} : colons2xplus), "markup_def"], "postprocess": (d) => _trace(d, d=>d[1], "markup")},
     {"name": "end", "symbols": [(lexer.has("EOF") ? {type: "EOF"} : EOF)]},
-    {"name": "markup_line", "symbols": ["markup_def"], "postprocess": (d) => _trace(d, d=>d[0], "markup_line")},
     {"name": "markup_def", "symbols": ["markup_kw", {"literal":"{"}, "_", "markup_attrs", {"literal":"}"}], "postprocess": (d) => _trace(d, d=>renderMarkup(d[0], d[3]), "markup_def")},
     {"name": "markup_attrs$ebnf$1", "symbols": []},
     {"name": "markup_attrs$ebnf$1", "symbols": ["markup_attrs$ebnf$1", "markup_attr"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
@@ -141,7 +135,7 @@ var grammar = {
     {"name": "plaintext$ebnf$1", "symbols": ["plaintext$ebnf$1", /[^:]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "plaintext", "symbols": ["plaintext$ebnf$1"], "postprocess": (d) => _trace(d, d=>idjoiner(d), "plaintext")}
 ]
-  , ParserStart: "content"
+  , ParserStart: "all"
 }
 if (typeof module !== 'undefined'&& typeof module.exports !== 'undefined') {
    module.exports = grammar;
