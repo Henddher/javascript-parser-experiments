@@ -105,20 +105,21 @@ describe("return 'parse error' with invalid markup", () => {
 });
 
 describe("ignore ::+", () => {
+    let ctx = {};
     test(":: is allowed and gets skipped", () => {
-        res = parse("::");
+        res = parse("::", ctx);
         expect(res).toEqual("");
     });
     test("::: is allowed and gets skipped", () => {
-        res = parse(":::");
+        res = parse(":::", ctx);
         expect(res).toEqual("");
     });
     test(":::: is allowed and gets skipped", () => {
-        res = parse("::::");
+        res = parse("::::", ctx);
         expect(res).toEqual("");
     });
     test("::::: is allowed and gets skipped", () => {
-        res = parse(":::::");
+        res = parse(":::::", ctx);
         expect(res).toEqual("");
     });
 });

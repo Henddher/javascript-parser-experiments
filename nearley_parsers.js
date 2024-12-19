@@ -2,13 +2,20 @@ const nearley = require("nearley");
 const grammar = require("./nearley_grammar.js");
 
 const ALLOW_AMBIGUOUS_GRAMMAR = false;
-const FEED_EOF = false;
-const EOF = "<EOF>";
+const FEED_EOF_IF_NEEDED = true;
+const EOF = "EOF"; // Must match token in grammar
+
+function _patch(res, patch) {
+    return Object.assign(res, patch);
+}
 
 function nearleyParseInner(text) {
-    if (!text) return { text: "" };
 
     let parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar), { keepHistory: false });
+    let res = {parser};
+
+    if (!text) return _patch(res, { text: "" });
+
     try {
 
         // TODO: Revisit after nearly adds EOF.
@@ -35,14 +42,16 @@ function nearleyParseInner(text) {
         // for EOF, there is no way for neither to abort and error out
         // because all the input was consumed and nothing parsed.
         // Hence, push <EOF> to make them "crash."
-        if (parser.results.length == 0 && FEED_EOF) {
+        if (parser.results.length == 0 && FEED_EOF_IF_NEEDED) {
             parser.feed(EOF); // TODO: Try using grammar to get the %EOF token from Moo or const in another .js file @imported into grammar
+            let eofWasFed = true;
+            _patch(res, {eofWasFed});
         }
         
         if (parser.results.length == 1) {
-            return {
-                text: parser.results[0].flat(Infinity).join("")
-            }
+            return _patch(res, {
+                text: parser.results[0].flat(Infinity).join(""),
+            });
         }
 
         let error;
@@ -54,11 +63,10 @@ function nearleyParseInner(text) {
                 if (ALLOW_AMBIGUOUS_GRAMMAR) {
                     let warning = error;
                     console.warn(warning);
-                    return {
+                    return _patch(res, {
                         text: parser.results[0].flat(Infinity).join(""),
                         warning,
-                        parser
-                    }
+                    });
                 }
             }
         }
@@ -66,11 +74,11 @@ function nearleyParseInner(text) {
         console.error(parser.reportErrorCommon("N/A", "N/A"));
         console.error(error);
 
-        return { error, parser };
+        return _patch(res, { error });
     }
     catch (parseError) {
         console.error(parseError);
-        return { error: `Parse error.\n${parseError}` };
+        return _patch(res, { error: `Parse error.\n${parseError}` });
     }
 }
 
@@ -86,9 +94,19 @@ function areAmbiguousResultsEqual(parser) {
     return false;
 }
 
-function nearleyParse(text) {
-    res = nearleyParseInner(text);
-    return res?.error || (FEED_EOF ? res.text.slice(0, -EOF.length) : res.text);
+function _eofTail(text) {
+    // "plaintext<EOF>" formatted as "...ntext[<EOF>]"
+    return `...${text.slice(-2*EOF.length, -EOF.length)}[${text.slice(-EOF.length)}]`
+}
+
+function nearleyParse(text, ctx={}) {
+    let res = nearleyParseInner(text);
+    if (res.eofWasFed && res.text) {
+        console.warn("<EOF> tail removed.", _eofTail(text));
+        res.text = res.text.slice(-EOF.length);
+    }
+    ctx.res = res;
+    return res?.error || res.text;
 }
 
 module.exports = { nearleyParseInner, nearleyParse }

@@ -53,6 +53,7 @@ const moo = require("moo");
 const lexer = moo.compile({
     // EOF: /$/, // won't compile because it matches empty string
     // EOF: /<EOF>/,
+    EOF: /EOF/, // Must match const in parsers (TODO: move both to another .js file)
     colon2x: /::/,
     // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
     colon: /:/, // one colon
@@ -63,6 +64,7 @@ const lexer = moo.compile({
     // any_but_colon: {match: /[^:]/, lineBreaks: true}, // non-greedy
     any_but_colon: {match: /[^:]/, lineBreaks: true},
     // any: {match: /./, lineBreaks: true},
+    // EOF: /.$/, // doesn't work
 });
 
 // https://github.com/no-context/moo/issues/64
@@ -113,8 +115,12 @@ colons_etc ->
 # colons must be right-associative
 colons -> ":" colons:? {% (d) => _trace(d, d=>d, "trace") %}
     | %colon2x colons:? {% (d) => _trace(d, d=>d, "trace") %}
+    # | colons _ {% (d) => _trace(d, d=>d, "trace") %} # ❌⏳
+    | colons end
 # colons -> ":" (_ colons):? {% (d) => _trace(d, d=>d, "trace") %} # 🤷🏻‍♂️
 #     | %colon2x (_ colons):? {% (d) => _trace(d, d=>d, "trace") %} # 🤷🏻‍♂️
+
+end -> %EOF
 
 markup_line -> markup_def {% (d) => _trace(d, d=>d[0], "markup_line") %}
 
