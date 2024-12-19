@@ -1,7 +1,7 @@
 const nearley = require("nearley");
 const grammar = require("./nearley_grammar.js");
 
-const ALLOW_AMBIGUOUS_GRAMMAR = false;
+const ALLOW_AMBIGUOUS_GRAMMAR = true;
 const FEED_EOF = false;
 const EOF = "<EOF>";
 
@@ -51,9 +51,9 @@ function nearleyParseInner(text) {
         } else {
             error = `Ambiguous grammar. Found ${parser.results.length} results`;
             if (areAmbiguousResultsEqual(parser)) {
-                let warning = error;
-                logger.warn(warning);
                 if (ALLOW_AMBIGUOUS_GRAMMAR) {
+                    let warning = error;
+                    console.warn(warning);
                     return {
                         text: parser.results[0].flat(Infinity).join(""),
                         warning,

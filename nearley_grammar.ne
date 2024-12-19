@@ -87,8 +87,11 @@ content ->
 
     # | content colons {% (d) => _trace(d, d=>d, "trace") %} # ❌
     | colons_etc {% (d) => _trace(d, d=>d, "trace") %}
-    | content colons_etc {% (d) => _trace(d, d=>d, "trace") %}
+    # | content colons_etc {% (d) => _trace(d, d=>d, "trace") %}
     # | colons {% (d) => _trace(d, d=>d, "trace") %} # ❌ ambiguous
+
+    # | ":" ":" markup_line {% (d) => _trace(d, d=>d[1], "trace") %}
+    # | content ":" ":" markup_line {% (d) => _trace(d, d=>d[1], "trace") %}
 
 # ✅
 # Always use {% (d) => _trace(d, d=>d, "trace") %} as processor
@@ -100,11 +103,24 @@ colons_etc ->
     # | colons_etc markup_line {% (d) => _trace(d, d=>d, "trace") %}
     # | ":" {% (d) => _trace(d, d=>d, "trace") %}
     # | colons_etc ":" {% (d) => _trace(d, d=>d, "trace") %}
-    %colon2x markup_line {% (d) => _trace(d, d=>d[1], "trace") %}
-    # | colons {% (d) => _trace(d, d=>d, "trace") %} # ❌ ambiguous
+    # "::" markup_line {% (d) => _trace(d, d=>d[1], "trace") %}
+    colons markup_line {% (d) => _trace(d, d=>d[1], "trace") %}
 
-colons -> %colon2x {% (d) => _trace(d, d=>d, "trace") %}
-    | colons %colon2x {% (d) => _trace(d, d=>d, "trace") %}
+    # | colons {% (d) => _trace(d, d=>d, "trace") %} # ❌ ambiguous
+    # | colons_etc colons {% (d) => _trace(d, d=>d, "trace") %} ✅
+
+    # | ":" {% (d) => _trace(d, d=>d, "trace") %}
+    # | colons_etc ":" {% (d) => _trace(d, d=>d, "trace") %}
+    
+
+# colons -> # ":" {% (d) => _trace(d, d=>d, "trace") %}
+#     ":" colons {% (d) => _trace(d, d=>d, "trace") %}
+#     | "::" colons {% (d) => _trace(d, d=>d, "trace") %}
+#     | ":" {% (d) => _trace(d, d=>d, "trace") %}
+
+# right-associative
+colons -> ":" colons:? {% (d) => _trace(d, d=>d, "trace") %}
+    | %colon2x colons:? {% (d) => _trace(d, d=>d, "trace") %}
 
 markup_line -> markup_def {% (d) => _trace(d, d=>d[0], "markup_line") %}
     # | %colon2x {% (d) => _trace(d, d=>d, "trace") %} # ❌⏳
