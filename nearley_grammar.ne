@@ -7,17 +7,15 @@ let DEBUG = false;
 // TODO: change order of params and put 'tag' first, default `callback=(d)=>d`
 // so `_trace(tag)`. Use Function.bind
 function _trace(d, callback, tag="") {
-    let log = () => {};
-
-    if (DEBUG) {
-        log = console.log
+    if (!DEBUG) {
+        return callback(d);
     }
 
-    log(`<<<< ${tag}`);
-    log(JSON.stringify(d, null, 2));
+    console.log(`<<<< ${tag}`);
+    console.log(d);
     let res = callback(d);
-    log(">>>>");
-    log(JSON.stringify(res, null, 2));
+    console.log(">>>>");
+    console.log(res);
     return res;
 }
 
@@ -90,6 +88,7 @@ content ->
     # | content colons {% (d) => _trace(d, d=>d, "trace") %} # ❌
     | colons_etc {% (d) => _trace(d, d=>d, "trace") %}
     | content colons_etc {% (d) => _trace(d, d=>d, "trace") %}
+    # | colons {% (d) => _trace(d, d=>d, "trace") %} # ❌ ambiguous
 
 # ✅
 # Always use {% (d) => _trace(d, d=>d, "trace") %} as processor
@@ -102,6 +101,7 @@ colons_etc ->
     # | ":" {% (d) => _trace(d, d=>d, "trace") %}
     # | colons_etc ":" {% (d) => _trace(d, d=>d, "trace") %}
     %colon2x markup_line {% (d) => _trace(d, d=>d[1], "trace") %}
+    # | colons {% (d) => _trace(d, d=>d, "trace") %} # ❌ ambiguous
 
 colons -> %colon2x {% (d) => _trace(d, d=>d, "trace") %}
     | colons %colon2x {% (d) => _trace(d, d=>d, "trace") %}

@@ -29,60 +29,61 @@ function nearleyParseInner(text) {
         parser.feed(text);
         // parser.feed(` ${text} `);
 
-        // if (parser.results.length == 1) {
-        //     return {
-        //         text: parser.results[0].flat(Infinity).join("")
-        //     };
-        // }
-
-        let logger = console.error;
-
-        let attempts = 2;
-        while (attempts > 0) {
-            if (parser.results.length == 0) {
-                --attempts;
-                if (FEED_EOF) {
-                    parser.feed(EOF); // TODO: Try using grammar to get the %EOF token from Moo or const in another .js file @imported into grammar
-                }
-                error = "No results";
-            } else if (parser.results.length == 1) { // TODO: Remove this block when EOF is addressed
-                return {
-                    text: parser.results[0].flat(Infinity).join("")
-                };
-            } else {
-                error = `Ambiguous grammar. Found ${parser.results.length} results`;
+        // Depending on the grammar, we might be stuck in a rule
+        // waiting for more chars (e.g. missing closing block).
+        // Given that neither the lexer nor the parser have support
+        // for EOF, there is no way for neither to abort and error out
+        // because all the input was consumed and nothing parsed.
+        // Hence, push <EOF> to make them "crash."
+        if (parser.results.length == 0 && FEED_EOF) {
+            parser.feed(EOF); // TODO: Try using grammar to get the %EOF token from Moo or const in another .js file @imported into grammar
+        }
+        
+        if (parser.results.length == 1) {
+            return {
+                text: parser.results[0].flat(Infinity).join("")
             }
         }
 
-        let res = { error };
-
-        if (ALLOW_AMBIGUOUS_GRAMMAR) {
-            logger = console.warn;
-            let badResults = parser.results.slice(0, 2); // first 2.
-            if (badResults) {
-                // Flatten and compare. If they match, warn and return one.
-                let flatten0 = badResults[0].flat(Infinity).join("");
-                let flatten1 = badResults[1].flat(Infinity).join("");
-                if (flatten0 == flatten1) {
-                    console.warn("First two results matched when flattened. Unflattened look like this:")
-                    console.warn(JSON.stringify(badResults, null, 2));
-
-                    res.text = flatten0,
-                        res.warning = error;
-                    delete res.error;
+        let error;
+        if (parser.results.length == 0) {
+            error = "No results.";
+        } else {
+            error = `Ambiguous grammar. Found ${parser.results.length} results`;
+            if (areAmbiguousResultsEqual(parser)) {
+                let warning = error;
+                logger.warn(warning);
+                if (ALLOW_AMBIGUOUS_GRAMMAR) {
+                    return {
+                        text: parser.results[0].flat(Infinity).join(""),
+                        warning,
+                        parser
+                    }
                 }
             }
         }
 
-        logger(parser.reportErrorCommon("N/A", "N/A"));
-        logger(error);
+        console.error(parser.reportErrorCommon("N/A", "N/A"));
+        console.error(error);
 
-        return res;
+        return { error, parser };
     }
     catch (parseError) {
         console.error(parseError);
         return { error: `Parse error.\n${parseError}` };
     }
+}
+
+function areAmbiguousResultsEqual(parser) {
+    let badResults = parser.results.slice(0, 2); // first 2.
+    if (badResults) {
+        // Flatten and compare. If they match, warn and return one.
+        let flatten0 = badResults[0].flat(Infinity).join("");
+        let flatten1 = badResults[1].flat(Infinity).join("");
+        console.warn("First two results matched when flattened.");
+        return flatten0 == flatten1;
+    }
+    return false;
 }
 
 function nearleyParse(text) {
