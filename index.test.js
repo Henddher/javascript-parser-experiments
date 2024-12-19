@@ -66,6 +66,10 @@ describe("parse unknown markup ::unknown{}", () => {
         res = parse("::::unknown{}");
         expect(res).toEqual("{}");
     });
+    test(":::::unknown{}", () => {
+        res = parse(":::::unknown{}");
+        expect(res).toEqual("{}");
+    });
 });
 
 describe("return 'parse error' with invalid markup", () => {
@@ -111,6 +115,10 @@ describe("ignore ::+", () => {
     });
     test(":::: is allowed and gets skipped", () => {
         res = parse("::::");
+        expect(res).toEqual("");
+    });
+    test("::::: is allowed and gets skipped", () => {
+        res = parse(":::::");
         expect(res).toEqual("");
     });
 });

@@ -97,36 +97,26 @@ content ->
 # Always use {% (d) => _trace(d, d=>d, "trace") %} as processor
 
 colons_etc -> 
-    # %colon2x {% (d) => _trace(d, d=>d, "trace") %}
-    # colons_etc %colon2x {% (d) => _trace(d, d=>d, "trace") %}
-    # | markup_line {% (d) => _trace(d, d=>d, "trace") %}
-    # | colons_etc markup_line {% (d) => _trace(d, d=>d, "trace") %}
-    # | ":" {% (d) => _trace(d, d=>d, "trace") %}
-    # | colons_etc ":" {% (d) => _trace(d, d=>d, "trace") %}
-    # "::" markup_line {% (d) => _trace(d, d=>d[1], "trace") %}
     colons markup_line {% (d) => _trace(d, d=>d[1], "trace") %}
+    # colons markup_line:? {% (d) => _trace(d, d=>d[1], "trace") %} # ❌ ambiguous
 
     # | colons {% (d) => _trace(d, d=>d, "trace") %} # ❌ ambiguous
-    # | colons_etc colons {% (d) => _trace(d, d=>d, "trace") %} ✅
+    # | colons_etc colons {% (d) => _trace(d, d=>d, "trace") %} # ✅
 
     # | ":" {% (d) => _trace(d, d=>d, "trace") %}
     # | colons_etc ":" {% (d) => _trace(d, d=>d, "trace") %}
-    
 
-# colons -> # ":" {% (d) => _trace(d, d=>d, "trace") %}
-#     ":" colons {% (d) => _trace(d, d=>d, "trace") %}
-#     | "::" colons {% (d) => _trace(d, d=>d, "trace") %}
-#     | ":" {% (d) => _trace(d, d=>d, "trace") %}
+    # | colons _ {% (d) => _trace(d, d=>d, "trace") %} # ❌ ambiguous
+    # | colons colons_etc {% (d) => _trace(d, d=>d, "trace") %} # ❌ ambiguous
+    # | colons {% (d) => _trace(d, d=>d, "trace") %} # ❌ ambiguous
 
-# right-associative
+# colons must be right-associative
 colons -> ":" colons:? {% (d) => _trace(d, d=>d, "trace") %}
     | %colon2x colons:? {% (d) => _trace(d, d=>d, "trace") %}
+# colons -> ":" (_ colons):? {% (d) => _trace(d, d=>d, "trace") %} # 🤷🏻‍♂️
+#     | %colon2x (_ colons):? {% (d) => _trace(d, d=>d, "trace") %} # 🤷🏻‍♂️
 
 markup_line -> markup_def {% (d) => _trace(d, d=>d[0], "markup_line") %}
-    # | %colon2x {% (d) => _trace(d, d=>d, "trace") %} # ❌⏳
-    # | markup_line %colon2x {% (d) => _trace(d, d=>d, "trace") %} # ❌
-    # | markup_line ":" {% (d) => _trace(d, d=>d, "trace") %} # ❌
-    # | %colon2x markup_line {% (d) => _trace(d, d=>d, "trace") %} # ❌ 
 
 markup_def -> markup_kw "{" _ markup_attrs "}" {% (d) => _trace(d, d=>renderMarkup(d[0], d[3]), "markup_def") %}
     # | _ {% (d) => _trace(d, d=>d, "trace") %} # ❌⏳
