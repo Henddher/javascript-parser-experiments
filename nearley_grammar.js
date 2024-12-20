@@ -26,10 +26,6 @@ function newMarkupAttribute(attrName, attrValue) {
     return attr;
 }
 
-function idjoiner(d) {
-    return id(d).join("");
-}
-
 const noopRenderer = (_attrs) => "";
 const jsonRenderer = (_attrs) => {
     // Force output to be deterministic.
@@ -110,6 +106,7 @@ var grammar = {
     {"name": "colons_etc", "symbols": [(lexer.has("colons2xplus") ? {type: "colons2xplus"} : colons2xplus), "markup_def"], "postprocess": (d) => _trace(d, d=>d[1], "markup")},
     {"name": "end", "symbols": [(lexer.has("EOF") ? {type: "EOF"} : EOF)]},
     {"name": "markup_def", "symbols": ["markup_kw", "markup_body"], "postprocess": (d) => _trace(d, d=>renderMarkup(d[0], d[1]), "markup_def")},
+    {"name": "markup_def", "symbols": ["markup_kw", "__"], "postprocess": (d) => _trace(d, d=>renderMarkup(d[0], []), "markup_def")},
     {"name": "markup_body", "symbols": [{"literal":"{"}, "_", "markup_attrs", {"literal":"}"}], "postprocess": (d) => _trace(d, d=>d[2], "markup_body")},
     {"name": "markup_attrs$ebnf$1", "symbols": []},
     {"name": "markup_attrs$ebnf$1", "symbols": ["markup_attrs$ebnf$1", "markup_attr"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
@@ -119,10 +116,10 @@ var grammar = {
     {"name": "string", "symbols": ["sqstring"], "postprocess": id},
     {"name": "markup_kw$ebnf$1", "symbols": [/[a-zA-Z0-9-]/]},
     {"name": "markup_kw$ebnf$1", "symbols": ["markup_kw$ebnf$1", /[a-zA-Z0-9-]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "markup_kw", "symbols": ["markup_kw$ebnf$1"], "postprocess": (d) => _trace(d, d=>idjoiner(d), "markup_kw")},
+    {"name": "markup_kw", "symbols": ["markup_kw$ebnf$1"], "postprocess": (d) => _trace(d, d=>d[0].join(""), "markup_kw")},
     {"name": "attr_name$ebnf$1", "symbols": [/[a-zA-Z0-9]/]},
     {"name": "attr_name$ebnf$1", "symbols": ["attr_name$ebnf$1", /[a-zA-Z0-9]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "attr_name", "symbols": ["attr_name$ebnf$1"], "postprocess": (d) => _trace(d, d=>idjoiner(d), "attr_name")}
+    {"name": "attr_name", "symbols": ["attr_name$ebnf$1"], "postprocess": (d) => _trace(d, d=>d[0].join(""), "attr_name")}
 ]
   , ParserStart: "all"
 }

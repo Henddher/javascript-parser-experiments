@@ -25,10 +25,6 @@ function newMarkupAttribute(attrName, attrValue) {
     return attr;
 }
 
-function idjoiner(d) {
-    return id(d).join("");
-}
-
 const noopRenderer = (_attrs) => "";
 const jsonRenderer = (_attrs) => {
     // Force output to be deterministic.
@@ -104,7 +100,9 @@ colons_etc ->
 
 end -> %EOF
 
-markup_def -> markup_kw markup_body {% (d) => _trace(d, d=>renderMarkup(d[0], d[1]), "markup_def") %}
+markup_def ->
+    markup_kw markup_body {% (d) => _trace(d, d=>renderMarkup(d[0], d[1]), "markup_def") %}
+    | markup_kw __ {% (d) => _trace(d, d=>renderMarkup(d[0], []), "markup_def") %}
 
 markup_body -> "{" _ markup_attrs "}" {% (d) => _trace(d, d=>d[2], "markup_body") %}
 
@@ -116,6 +114,6 @@ string ->
     dqstring {% id %}
     | sqstring {% id %}
 
-markup_kw -> [a-zA-Z0-9-]:+ {% (d) => _trace(d, d=>idjoiner(d), "markup_kw") %}
+markup_kw -> [a-zA-Z0-9-]:+ {% (d) => _trace(d, d=>d[0].join(""), "markup_kw") %}
 
-attr_name -> [a-zA-Z0-9]:+ {% (d) => _trace(d, d=>idjoiner(d), "attr_name") %}
+attr_name -> [a-zA-Z0-9]:+ {% (d) => _trace(d, d=>d[0].join(""), "attr_name") %}
