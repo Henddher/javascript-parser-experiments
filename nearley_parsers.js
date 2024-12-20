@@ -99,13 +99,14 @@ function _eofTail(text) {
 }
 
 function _wrapText(text) {
-    return ` ${text} `;
+    // return ` ${text} `;
+    return text;
 }
 
 function nearleyParse(text, ctx={}) {
     let res = nearleyParseInner(_wrapText(text));
     if (res.text) {
-        res.text = res.text.trim();
+        // res.text = res.text.trim();
         if (res.eofWasFed) {
             console.warn("<EOF> tail removed.", _eofTail(text));
             res.text = res.text.slice(-EOF.length);
