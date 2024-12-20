@@ -31,6 +31,14 @@ function idjoiner(d) {
 }
 
 const noopRenderer = (_attrs) => "";
+const jsonRenderer = (_attrs) => {
+    // Force output to be deterministic.
+    // CAVEAT: if _attrs was not a flat Object, this
+    // would NOT work (e.g. {a:{b:"1", c:"2"}} != {a:{c:"2", b:"1"}})
+    return JSON.stringify(
+        Object.fromEntries(Object.entries(_attrs).sort())
+    );
+};
 
 const _s = (text) => text || "";
 
@@ -45,7 +53,7 @@ const MARKUP_RENDERERS = {
 }
 
 function renderMarkup(markupKw, markupAttrs) {
-    let renderer = MARKUP_RENDERERS[markupKw] || JSON.stringify;
+    let renderer = MARKUP_RENDERERS[markupKw] || jsonRenderer;
     let attrs = Object.assign({}, ...markupAttrs);
     return renderer(attrs);
 }
@@ -113,10 +121,7 @@ var grammar = {
     {"name": "markup_kw", "symbols": ["markup_kw$ebnf$1"], "postprocess": (d) => _trace(d, d=>idjoiner(d), "markup_kw")},
     {"name": "attr_name$ebnf$1", "symbols": [/[a-zA-Z0-9]/]},
     {"name": "attr_name$ebnf$1", "symbols": ["attr_name$ebnf$1", /[a-zA-Z0-9]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "attr_name", "symbols": ["attr_name$ebnf$1"], "postprocess": (d) => _trace(d, d=>idjoiner(d), "attr_name")},
-    {"name": "plaintext$ebnf$1", "symbols": [/[^:]/]},
-    {"name": "plaintext$ebnf$1", "symbols": ["plaintext$ebnf$1", /[^:]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "plaintext", "symbols": ["plaintext$ebnf$1"], "postprocess": (d) => _trace(d, d=>idjoiner(d), "plaintext")}
+    {"name": "attr_name", "symbols": ["attr_name$ebnf$1"], "postprocess": (d) => _trace(d, d=>idjoiner(d), "attr_name")}
 ]
   , ParserStart: "all"
 }

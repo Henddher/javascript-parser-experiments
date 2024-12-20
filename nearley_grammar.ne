@@ -30,6 +30,14 @@ function idjoiner(d) {
 }
 
 const noopRenderer = (_attrs) => "";
+const jsonRenderer = (_attrs) => {
+    // Force output to be deterministic.
+    // CAVEAT: if _attrs was not a flat Object, this
+    // would NOT work (e.g. {a:{b:"1", c:"2"}} != {a:{c:"2", b:"1"}})
+    return JSON.stringify(
+        Object.fromEntries(Object.entries(_attrs).sort())
+    );
+};
 
 const _s = (text) => text || "";
 
@@ -44,7 +52,7 @@ const MARKUP_RENDERERS = {
 }
 
 function renderMarkup(markupKw, markupAttrs) {
-    let renderer = MARKUP_RENDERERS[markupKw] || JSON.stringify;
+    let renderer = MARKUP_RENDERERS[markupKw] || jsonRenderer;
     let attrs = Object.assign({}, ...markupAttrs);
     return renderer(attrs);
 }
@@ -107,5 +115,3 @@ string -> dqstring | sqstring {% id %}
 markup_kw -> [a-zA-Z0-9-]:+ {% (d) => _trace(d, d=>idjoiner(d), "markup_kw") %}
 
 attr_name -> [a-zA-Z0-9]:+ {% (d) => _trace(d, d=>idjoiner(d), "attr_name") %}
-
-plaintext -> [^:]:+ {% (d) => _trace(d, d=>idjoiner(d), "plaintext") %}

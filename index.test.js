@@ -54,7 +54,7 @@ describe("parse unknown markup ::unknown{}", () => {
         res = parse("::unknown{a='1'}");
         expect(res).toEqual("{\"a\":\"1\"}");
     });
-    test("::unknown{a='1', b='2'}", () => {
+    test("::unknown{a='1' b='2'}", () => {
         res = parse("::unknown{a='1' b='2'}");
         expect(res).toEqual("{\"a\":\"1\",\"b\":\"2\"}");
     });
@@ -69,6 +69,12 @@ describe("parse unknown markup ::unknown{}", () => {
     test(":::::unknown{}", () => {
         res = parse(":::::unknown{}");
         expect(res).toEqual("{}");
+    });
+    test("::unknown{a='1' b='2'} == ::unknown{b='2' a='1'}", () => {
+        res0 = parse("::unknown{a='1' b='2'}");
+        expect(res0).toEqual("{\"a\":\"1\",\"b\":\"2\"}");
+        res1 = parse("::unknown{b='2' a='1'}");
+        expect(res1).toEqual("{\"a\":\"1\",\"b\":\"2\"}");
     });
 });
 
