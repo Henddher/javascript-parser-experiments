@@ -20,37 +20,46 @@ function _trace(d, callback, tag="") {
 }
 
 function newMarkupAttribute(attrName, attrValue) {
-    let attr = {};
-    attr[attrName] = attrValue;
-    return attr;
+    // NOTE: For now, a tuple suffices. Later, when the result
+    // of parsing becomes an AST, a true instance would make
+    // more sence.
+    return [attrName, attrValue];
 }
 
-const noopRenderer = (_attrs) => "";
-const jsonRenderer = (_attrs) => {
+const noopRenderer = (attrs) => "";
+const jsonRenderer = (attrs) => {
+    if (!attrs.length) {
+        // Although [] is a valid JSON, we don't want it.
+        return "";
+    }
     // Force output to be deterministic.
-    // CAVEAT: if _attrs was not a flat Object, this
-    // would NOT work (e.g. {a:{b:"1", c:"2"}} != {a:{c:"2", b:"1"}})
     return JSON.stringify(
-        Object.fromEntries(Object.entries(_attrs).sort())
+        Object.fromEntries(attrs.sort())
     );
 };
 
-const _s = (text) => text || "";
+const _str = (text) => text || "";
 
 const MARKUP_RENDERERS = {
     "quoted-text": (attrs) => {
-        if (!attrs?.quote && !attrs?.author) {
+        let objAttrs = Object.fromEntries(attrs);
+        // TODO: should a quoted-text missing both be allowed? Maybe no! IDEA: add opts.strict to validate docs
+        if (!objAttrs?.quote && !objAttrs?.author) {
             return "";
         }
-        return `${_s(attrs?.quote)} - by ${_s(attrs?.author)}`;
+        // Template:
+        // <NEWLINE>
+        // > quote <NEWLINE>
+        // > <TAB> - author <NEWLINE>
+        // <NEWLINE>
+        return "\n" + `> ${_str(objAttrs?.quote)}` + "\n" + `> \t - ${_str(objAttrs?.author)}` + "\n";
     },
     "row": noopRenderer,
 }
 
 function renderMarkup(markupKw, markupAttrs) {
     let renderer = MARKUP_RENDERERS[markupKw] || jsonRenderer;
-    let attrs = Object.assign({}, ...markupAttrs);
-    return renderer(attrs);
+    return renderer(markupAttrs);
 }
 
 const moo = require("moo");

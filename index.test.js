@@ -41,53 +41,61 @@ describe("parse plaintext", () => {
     });
 });
 
-describe("parse unknown markup ::unknown (w/ and w/o attrs)", () => {
-    test("::unknown", () => {
-        res = parse("::unknown");
+describe("parse unknown markup ::ab (w/ and w/o attrs)", () => {
+    test("::ab", () => {
+        res = parse("::ab");
         expect(res).toEqual("");
     });
-    test("::unknown ", () => {
-        res = parse("::unknown     ");
+    test("::ab ", () => {
+        res = parse("::ab");
         expect(res).toEqual("");
     });
-    test("::unknown{}", () => {
-        res = parse("::unknown{}");
-        expect(res).toEqual("{}");
+    test("::ab\n", () => {
+        res = parse("::ab");
+        expect(res).toEqual("");
     });
-    test("::unknown{ }", () => {
-        res = parse("::unknown{ }");
-        expect(res).toEqual("{}");
+    test("::ab{}", () => {
+        res = parse("::ab{}");
+        expect(res).toEqual("");
     });
-    test("::unknown{a='1'}", () => {
-        res = parse("::unknown{a='1'}");
+    test("::ab{ }", () => {
+        res = parse("::ab{ }");
+        expect(res).toEqual("");
+    });
+    test("::ab{a='1'}", () => {
+        res = parse("::ab{a='1'}");
         expect(res).toEqual("{\"a\":\"1\"}");
     });
-    test("::unknown{a='1' b='2'}", () => {
-        res = parse("::unknown{a='1' b='2'}");
+    test("::ab{a='1' b='2'}", () => {
+        res = parse("::ab{a='1' b='2'}");
         expect(res).toEqual("{\"a\":\"1\",\"b\":\"2\"}");
     });
-    test(":::unknown{}", () => {
-        res = parse(":::unknown{}");
-        expect(res).toEqual("{}");
+    test(":::ab{}", () => {
+        res = parse(":::ab{}");
+        expect(res).toEqual("");
     });
-    test("::::unknown{}", () => {
-        res = parse("::::unknown{}");
-        expect(res).toEqual("{}");
+    test("::::ab{}", () => {
+        res = parse("::::ab{}");
+        expect(res).toEqual("");
     });
-    test(":::::unknown{}", () => {
-        res = parse(":::::unknown{}");
-        expect(res).toEqual("{}");
+    test(":::::ab{}", () => {
+        res = parse(":::::ab{}");
+        expect(res).toEqual("");
     });
-    test("::unknown{a='1' b='2'} == ::unknown{b='2' a='1'}", () => {
-        res0 = parse("::unknown{a='1' b='2'}");
+    test("::ab{a='1' b='2'} == ::ab{b='2' a='1'}", () => {
+        res0 = parse("::ab{a='1' b='2'}");
         expect(res0).toEqual("{\"a\":\"1\",\"b\":\"2\"}");
-        res1 = parse("::unknown{b='2' a='1'}");
+        res1 = parse("::ab{b='2' a='1'}");
         expect(res1).toEqual("{\"a\":\"1\",\"b\":\"2\"}");
     });
 });
 
 describe("return 'parse error' with invalid markup", () => {
     let parseErrorRegex = /Parse error\.\n*/;
+    test("::invalid. is not terminated by \s", () => {
+        res = parse("::invalid.");
+        expect(res).toMatch(parseErrorRegex);
+    });
     test("::invalid{", () => {
         res = parse("::invalid{");
         expect(res).toMatch(parseErrorRegex);
@@ -143,7 +151,7 @@ describe("parse attribute-less markup (e.g. ::any )", () => {
     });
     test(":::::any", () => {
         res = parse(":::::any", ctx);
-        expect(res).toEqual("{}");
+        expect(res).toEqual("");
     });
 });
 
@@ -167,6 +175,8 @@ describe("parse ::row (w/ and w/o attrs)", () => {
 });
 
 describe("parse ::quoted-text{}", () => {
+    const template = ({quote, author}) => `> ${quote || ""}\n> \t - ${author || ""}`; // TODO: abstract out all specifics from the grammar.
+    const reQuoteAuthor = /^.*Quote.*Author.*$/sgm;
     test("::quoted-text{}", () => {
         res = parse("::quoted-text{}");
         expect(res).toEqual("");
@@ -175,21 +185,27 @@ describe("parse ::quoted-text{}", () => {
         res = parse("::quoted-text{ }");
         expect(res).toEqual("");
     });
+    test("::quoted-text{author='Author' quote=\"Quote\"}", () => {
+        res = parse("::quoted-text{author='Author' quote=\"Quote\"}");
+        expect(res).toMatch(reQuoteAuthor);
+        // Exact templated string match. This test is prone to break if the template changes.
+        expect(res).toEqual(template({author: "Author", quote: "Quote"}));
+    });
     test("::quoted-text{author='Hamlet'}", () => {
         res = parse("::quoted-text{author='Hamlet'}");
-        expect(res).toEqual("- by Hamlet");
+        expect(res).toEqual(template({author: "Hamlet"}));
     });
     test("::quoted-text{quote='To be or not to be ...'}", () => {
         res = parse("::quoted-text{quote='To be or not to be ...'}");
-        expect(res).toEqual("To be or not to be ... - by");
+        expect(res).toEqual(template({quote: "To be or not to be ..."}));
     });
     test("::quoted-text{author='Hamlet' quote='To be or not to be ...'}", () => {
         res = parse("::quoted-text{author='Hamlet' quote='To be or not to be ...'}");
-        expect(res).toEqual("To be or not to be ... - by Hamlet");
+        expect(res).toEqual(template({author: "Hamlet", quote: "To be or not to be ..."}));
     });
     test("::quoted-text{unknown='unknown' author='Hamlet' quote='To be or not to be ...'}", () => {
         res = parse("::quoted-text{unknown='unknown' author='Hamlet' quote='To be or not to be ...'}");
-        expect(res).toEqual("To be or not to be ... - by Hamlet");
+        expect(res).toEqual(template({author: "Hamlet", quote: "To be or not to be ...", unknown: "???"}));
     });
 });
 
