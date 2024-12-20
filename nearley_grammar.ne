@@ -104,13 +104,17 @@ colons_etc ->
 
 end -> %EOF
 
-markup_def -> markup_kw "{" _ markup_attrs "}" {% (d) => _trace(d, d=>renderMarkup(d[0], d[3]), "markup_def") %}
+markup_def -> markup_kw markup_body {% (d) => _trace(d, d=>renderMarkup(d[0], d[1]), "markup_def") %}
+
+markup_body -> "{" _ markup_attrs "}" {% (d) => _trace(d, d=>d[2], "markup_body") %}
 
 markup_attrs -> markup_attr:* {% (d) => _trace(d, id, "markup_attrs") %}
 
 markup_attr -> attr_name _ "=" _ string _ {% (d) => _trace(d, d=>newMarkupAttribute(d[0], d[4]), "markup_attr") %}
 
-string -> dqstring | sqstring {% id %}
+string ->
+    dqstring {% id %}
+    | sqstring {% id %}
 
 markup_kw -> [a-zA-Z0-9-]:+ {% (d) => _trace(d, d=>idjoiner(d), "markup_kw") %}
 

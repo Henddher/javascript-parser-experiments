@@ -98,12 +98,6 @@ function _eofTail(text) {
     return `...${text.slice(-2*EOF.length, -EOF.length)}[${text.slice(-EOF.length)}]`
 }
 
-// function *_wrapText(text) {
-//     yield " ";
-//     yield text;
-//     yield " ";
-// }
-
 function _wrapText(text) {
     return ` ${text} `;
 }

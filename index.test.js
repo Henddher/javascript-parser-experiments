@@ -41,7 +41,15 @@ describe("parse plaintext", () => {
     });
 });
 
-describe("parse unknown markup ::unknown{}", () => {
+describe("parse unknown markup ::unknown (w/ and w/o attrs)", () => {
+    test("::unknown", () => {
+        res = parse("::unknown");
+        expect(res).toEqual("");
+    });
+    test("::unknown ", () => {
+        res = parse("::unknown     ");
+        expect(res).toEqual("");
+    });
     test("::unknown{}", () => {
         res = parse("::unknown{}");
         expect(res).toEqual("{}");
@@ -80,10 +88,6 @@ describe("parse unknown markup ::unknown{}", () => {
 
 describe("return 'parse error' with invalid markup", () => {
     let parseErrorRegex = /Parse error\.\n*/;
-    test("::invalid <space> {} is not allowed", () => {
-        res = parse("::invalid {}");
-        expect(res).toMatch(parseErrorRegex);
-    });
     test("::invalid{", () => {
         res = parse("::invalid{");
         expect(res).toMatch(parseErrorRegex);
@@ -131,7 +135,23 @@ describe("ignore ::+", () => {
     });
 });
 
-describe("parse ::row{}", () => {
+describe("parse attribute-less markup (e.g. ::any )", () => {
+    let ctx = {};
+    test("::row", () => {
+        res = parse("::row", ctx);
+        expect(res).toEqual("");
+    });
+    test(":::::any", () => {
+        res = parse(":::::any", ctx);
+        expect(res).toEqual("{}");
+    });
+});
+
+describe("parse ::row (w/ and w/o attrs)", () => {
+    test("::row", () => {
+        res = parse("::row");
+        expect(res).toEqual("");
+    });
     test("::row{}", () => {
         res = parse("::row{}");
         expect(res).toEqual("");
