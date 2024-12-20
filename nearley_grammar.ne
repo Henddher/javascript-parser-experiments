@@ -7,103 +7,122 @@ let DEBUG = false;
 // TODO: change order of params and put 'tag' first, default `callback=(d)=>d`
 // so `_trace(tag)`. Use Function.bind
 function _trace(d, callback, tag="") {
-    let log = () => {};
-
-    if (DEBUG) {
-        log = console.log
+    if (!DEBUG) {
+        return callback(d);
     }
 
-    log(`<<<< ${tag}`);
-    log(JSON.stringify(d, null, 2));
+    console.log(`<<<< ${tag}`);
+    console.log(d);
     let res = callback(d);
-    log(">>>>");
-    log(JSON.stringify(res, null, 2));
+    console.log(">>>>");
+    console.log(res);
     return res;
 }
 
 function newMarkupAttribute(attrName, attrValue) {
-    let attr = {};
-    attr[attrName] = attrValue;
-    return attr;
+    // NOTE: For now, a tuple suffices. Later, when the result
+    // of parsing becomes an AST, a true instance would make
+    // more sence.
+    return [attrName, attrValue];
 }
 
-function idjoiner(d) {
-    return id(d).join("");
-}
+const noopRenderer = (attrs) => "";
+const jsonRenderer = (attrs) => {
+    if (!attrs.length) {
+        // Although [] is a valid JSON, we don't want it.
+        return "";
+    }
+    // Force output to be deterministic.
+    return JSON.stringify(
+        Object.fromEntries(attrs.sort())
+    );
+};
 
-const noopRenderer = (_attrs) => "";
-
-const _s = (text) => text || "";
+const _str = (text) => text || "";
 
 const MARKUP_RENDERERS = {
     "quoted-text": (attrs) => {
-        if (!attrs?.quote && !attrs?.author) {
+        let objAttrs = Object.fromEntries(attrs);
+        // TODO: should a quoted-text missing both be allowed? Maybe no! IDEA: add opts.strict to validate docs
+        if (!objAttrs?.quote && !objAttrs?.author) {
             return "";
         }
-        return `${_s(attrs?.quote)} - by ${_s(attrs?.author)}`;
+        // Template:
+        // <NEWLINE>
+        // > quote <NEWLINE>
+        // > <TAB> - author <NEWLINE>
+        // <NEWLINE>
+        return "\n" + `> ${_str(objAttrs?.quote)}` + "\n" + `> \t - ${_str(objAttrs?.author)}` + "\n";
     },
     "row": noopRenderer,
 }
 
 function renderMarkup(markupKw, markupAttrs) {
-    let renderer = MARKUP_RENDERERS[markupKw] || JSON.stringify;
-    let attrs = Object.assign({}, ...markupAttrs);
-    return renderer(attrs);
+    let renderer = MARKUP_RENDERERS[markupKw] || jsonRenderer;
+    return renderer(markupAttrs);
 }
 
 const moo = require("moo");
 const lexer = moo.compile({
-    // EOF: /$/, // won't compile because it matches empty string
-    // EOF: /<EOF>/,
-    colon2x: /::/,
-    // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
+    EOF: /<EOF>/, // Must match const in parsers (TODO: move both to another .js file)
+    colons2xplus: /::+/,
     colon: /:/, // one colon
-    // markup_kw: /[a-zA-Z0-9-]+/,
-    // open_curly: /\{/,
-    // close_curly: /}/,
-    // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
-    // any_but_colon: {match: /[^:]/, lineBreaks: true}, // non-greedy
     any_but_colon: {match: /[^:]/, lineBreaks: true},
-    // any: {match: /./, lineBreaks: true},
 });
-
-// https://github.com/no-context/moo/issues/64
-// const itt = require('itt')
-// const tokens = itt.push({ type: 'eof', value: '<eof>' }, lexer)
-// for (const tok of tokens) {
-//   console.log(tok)
-// }
 %}
 
 @lexer lexer
 
-content -> markup_line {% (d) => _trace(d, d=>d, "trace") %}
-    | content markup_line {% (d) => _trace(d, d=>d, "trace") %}
-    | %any_but_colon {% (d) => _trace(d, d=>d, "trace") %}
-    | content %any_but_colon {% (d) => _trace(d, d=>d, "trace") %}
+all ->
+    # Match plaintext.
+    # We use left recursion to keep stack shallow.
+    # Left recursion means that the first term of the right-hand-side
+    # of the rule is the rule itself.
+    # Ex.
+    #               +--- first term is the rule itself.
+    #              /
+    #     all -> all %any_but_colon
+    #      \   \
+    #       \   +---- everything to the right is RHS
+    #        \
+    #         + production symbol (aka rule)
+    #
+    # By applying recursion, we can match the terminal %any_but_colon
+    # at the beginning, in the middle, or at the end of any chunk of text
+    # being lexed/parsed. I.e. we can match %any_but_colon anywhere.
+    %any_but_colon {% (d) => _trace(d, d=>d, "trace") %}
+    | all %any_but_colon {% (d) => _trace(d, d=>d, "trace") %}
+
+    # Match a single colon anywhere.
+    # Use left recursion.
     | ":" {% (d) => _trace(d, d=>d, "trace") %}
-    | content ":" {% (d) => _trace(d, d=>d, "trace") %}
+    | all ":" {% (d) => _trace(d, d=>d, "trace") %}
 
-# ✅
-# Always use `{% (d) => _trace(d, d=>d), "trace") %}` as processor
+    # Match a sequence of colons anywhere.
+    # Use left recursion.
+    | colons_etc {% (d) => _trace(d, d=>d, "trace") %}
+    | all colons_etc {% (d) => _trace(d, d=>d, "trace") %}
 
-markup_line -> %colon2x markup_def {% (d) => _trace(d, d=>d[1], "markup_line") %}
-    # | %colon2x {% (d) => _trace(d, d=>d, "trace") %} # ❌⏳
-    # | markup_line %colon2x {% (d) => _trace(d, d=>d, "trace") %} # ❌
-    # | markup_line ":" {% (d) => _trace(d, d=>d, "trace") %} # ❌
-    # | %colon2x markup_line {% (d) => _trace(d, d=>d, "trace") %} # ❌ 
+colons_etc -> 
+    %colons2xplus __ {% (d) => _trace(d, d=>null, "null") %}
+    | %colons2xplus markup_def {% (d) => _trace(d, d=>d[1], "markup") %}
 
-markup_def -> markup_kw "{" _ markup_attrs "}" {% (d) => _trace(d, d=>renderMarkup(d[0], d[3]), "markup_def") %}
-    # | _ {% (d) => _trace(d, d=>d, "trace") %} # ❌⏳
+end -> %EOF
+
+markup_def ->
+    markup_kw markup_body {% (d) => _trace(d, d=>renderMarkup(d[0], d[1]), "markup_def") %}
+    | markup_kw __ {% (d) => _trace(d, d=>renderMarkup(d[0], []), "markup_def") %}
+
+markup_body -> "{" _ markup_attrs "}" {% (d) => _trace(d, d=>d[2], "markup_body") %}
 
 markup_attrs -> markup_attr:* {% (d) => _trace(d, id, "markup_attrs") %}
 
 markup_attr -> attr_name _ "=" _ string _ {% (d) => _trace(d, d=>newMarkupAttribute(d[0], d[4]), "markup_attr") %}
 
-string -> dqstring | sqstring {% id %}
+string ->
+    dqstring {% id %}
+    | sqstring {% id %}
 
-markup_kw -> [a-zA-Z0-9-]:+ {% (d) => _trace(d, d=>idjoiner(d), "markup_kw") %}
+markup_kw -> [a-zA-Z0-9-]:+ {% (d) => _trace(d, d=>d[0].join(""), "markup_kw") %}
 
-attr_name -> [a-zA-Z0-9]:+ {% (d) => _trace(d, d=>idjoiner(d), "attr_name") %}
-
-plaintext -> [^:]:+ {% (d) => _trace(d, d=>idjoiner(d), "plaintext") %}
+attr_name -> [a-zA-Z0-9]:+ {% (d) => _trace(d, d=>d[0].join(""), "attr_name") %}

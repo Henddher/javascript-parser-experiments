@@ -8,72 +8,68 @@ let DEBUG = false;
 // TODO: change order of params and put 'tag' first, default `callback=(d)=>d`
 // so `_trace(tag)`. Use Function.bind
 function _trace(d, callback, tag="") {
-    let log = () => {};
-
-    if (DEBUG) {
-        log = console.log
+    if (!DEBUG) {
+        return callback(d);
     }
 
-    log(`<<<< ${tag}`);
-    log(JSON.stringify(d, null, 2));
+    console.log(`<<<< ${tag}`);
+    console.log(d);
     let res = callback(d);
-    log(">>>>");
-    log(JSON.stringify(res, null, 2));
+    console.log(">>>>");
+    console.log(res);
     return res;
 }
 
 function newMarkupAttribute(attrName, attrValue) {
-    let attr = {};
-    attr[attrName] = attrValue;
-    return attr;
+    // NOTE: For now, a tuple suffices. Later, when the result
+    // of parsing becomes an AST, a true instance would make
+    // more sence.
+    return [attrName, attrValue];
 }
 
-function idjoiner(d) {
-    return id(d).join("");
-}
+const noopRenderer = (attrs) => "";
+const jsonRenderer = (attrs) => {
+    if (!attrs.length) {
+        // Although [] is a valid JSON, we don't want it.
+        return "";
+    }
+    // Force output to be deterministic.
+    return JSON.stringify(
+        Object.fromEntries(attrs.sort())
+    );
+};
 
-const noopRenderer = (_attrs) => "";
-
-const _s = (text) => text || "";
+const _str = (text) => text || "";
 
 const MARKUP_RENDERERS = {
     "quoted-text": (attrs) => {
-        if (!attrs?.quote && !attrs?.author) {
+        let objAttrs = Object.fromEntries(attrs);
+        // TODO: should a quoted-text missing both be allowed? Maybe no! IDEA: add opts.strict to validate docs
+        if (!objAttrs?.quote && !objAttrs?.author) {
             return "";
         }
-        return `${_s(attrs?.quote)} - by ${_s(attrs?.author)}`;
+        // Template:
+        // <NEWLINE>
+        // > quote <NEWLINE>
+        // > <TAB> - author <NEWLINE>
+        // <NEWLINE>
+        return "\n" + `> ${_str(objAttrs?.quote)}` + "\n" + `> \t - ${_str(objAttrs?.author)}` + "\n";
     },
     "row": noopRenderer,
 }
 
 function renderMarkup(markupKw, markupAttrs) {
-    let renderer = MARKUP_RENDERERS[markupKw] || JSON.stringify;
-    let attrs = Object.assign({}, ...markupAttrs);
-    return renderer(attrs);
+    let renderer = MARKUP_RENDERERS[markupKw] || jsonRenderer;
+    return renderer(markupAttrs);
 }
 
 const moo = require("moo");
 const lexer = moo.compile({
-    // EOF: /$/, // won't compile because it matches empty string
-    // EOF: /<EOF>/,
-    colon2x: /::/,
-    // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
+    EOF: /<EOF>/, // Must match const in parsers (TODO: move both to another .js file)
+    colons2xplus: /::+/,
     colon: /:/, // one colon
-    // markup_kw: /[a-zA-Z0-9-]+/,
-    // open_curly: /\{/,
-    // close_curly: /}/,
-    // any_but_2xcolon: {match: /[^:][^:]*?/, lineBreaks: true}, // non-greedy
-    // any_but_colon: {match: /[^:]/, lineBreaks: true}, // non-greedy
     any_but_colon: {match: /[^:]/, lineBreaks: true},
-    // any: {match: /./, lineBreaks: true},
 });
-
-// https://github.com/no-context/moo/issues/64
-// const itt = require('itt')
-// const tokens = itt.push({ type: 'eof', value: '<eof>' }, lexer)
-// for (const tok of tokens) {
-//   console.log(tok)
-// }
 var grammar = {
     Lexer: lexer,
     ParserRules: [
@@ -109,31 +105,32 @@ var grammar = {
             return d.join("");
         }
         },
-    {"name": "content", "symbols": ["markup_line"], "postprocess": (d) => _trace(d, d=>d, "trace")},
-    {"name": "content", "symbols": ["content", "markup_line"], "postprocess": (d) => _trace(d, d=>d, "trace")},
-    {"name": "content", "symbols": [(lexer.has("any_but_colon") ? {type: "any_but_colon"} : any_but_colon)], "postprocess": (d) => _trace(d, d=>d, "trace")},
-    {"name": "content", "symbols": ["content", (lexer.has("any_but_colon") ? {type: "any_but_colon"} : any_but_colon)], "postprocess": (d) => _trace(d, d=>d, "trace")},
-    {"name": "content", "symbols": [{"literal":":"}], "postprocess": (d) => _trace(d, d=>d, "trace")},
-    {"name": "content", "symbols": ["content", {"literal":":"}], "postprocess": (d) => _trace(d, d=>d, "trace")},
-    {"name": "markup_line", "symbols": [(lexer.has("colon2x") ? {type: "colon2x"} : colon2x), "markup_def"], "postprocess": (d) => _trace(d, d=>d[1], "markup_line")},
-    {"name": "markup_def", "symbols": ["markup_kw", {"literal":"{"}, "_", "markup_attrs", {"literal":"}"}], "postprocess": (d) => _trace(d, d=>renderMarkup(d[0], d[3]), "markup_def")},
+    {"name": "all", "symbols": [(lexer.has("any_but_colon") ? {type: "any_but_colon"} : any_but_colon)], "postprocess": (d) => _trace(d, d=>d, "trace")},
+    {"name": "all", "symbols": ["all", (lexer.has("any_but_colon") ? {type: "any_but_colon"} : any_but_colon)], "postprocess": (d) => _trace(d, d=>d, "trace")},
+    {"name": "all", "symbols": [{"literal":":"}], "postprocess": (d) => _trace(d, d=>d, "trace")},
+    {"name": "all", "symbols": ["all", {"literal":":"}], "postprocess": (d) => _trace(d, d=>d, "trace")},
+    {"name": "all", "symbols": ["colons_etc"], "postprocess": (d) => _trace(d, d=>d, "trace")},
+    {"name": "all", "symbols": ["all", "colons_etc"], "postprocess": (d) => _trace(d, d=>d, "trace")},
+    {"name": "colons_etc", "symbols": [(lexer.has("colons2xplus") ? {type: "colons2xplus"} : colons2xplus), "__"], "postprocess": (d) => _trace(d, d=>null, "null")},
+    {"name": "colons_etc", "symbols": [(lexer.has("colons2xplus") ? {type: "colons2xplus"} : colons2xplus), "markup_def"], "postprocess": (d) => _trace(d, d=>d[1], "markup")},
+    {"name": "end", "symbols": [(lexer.has("EOF") ? {type: "EOF"} : EOF)]},
+    {"name": "markup_def", "symbols": ["markup_kw", "markup_body"], "postprocess": (d) => _trace(d, d=>renderMarkup(d[0], d[1]), "markup_def")},
+    {"name": "markup_def", "symbols": ["markup_kw", "__"], "postprocess": (d) => _trace(d, d=>renderMarkup(d[0], []), "markup_def")},
+    {"name": "markup_body", "symbols": [{"literal":"{"}, "_", "markup_attrs", {"literal":"}"}], "postprocess": (d) => _trace(d, d=>d[2], "markup_body")},
     {"name": "markup_attrs$ebnf$1", "symbols": []},
     {"name": "markup_attrs$ebnf$1", "symbols": ["markup_attrs$ebnf$1", "markup_attr"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "markup_attrs", "symbols": ["markup_attrs$ebnf$1"], "postprocess": (d) => _trace(d, id, "markup_attrs")},
     {"name": "markup_attr", "symbols": ["attr_name", "_", {"literal":"="}, "_", "string", "_"], "postprocess": (d) => _trace(d, d=>newMarkupAttribute(d[0], d[4]), "markup_attr")},
-    {"name": "string", "symbols": ["dqstring"]},
+    {"name": "string", "symbols": ["dqstring"], "postprocess": id},
     {"name": "string", "symbols": ["sqstring"], "postprocess": id},
     {"name": "markup_kw$ebnf$1", "symbols": [/[a-zA-Z0-9-]/]},
     {"name": "markup_kw$ebnf$1", "symbols": ["markup_kw$ebnf$1", /[a-zA-Z0-9-]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "markup_kw", "symbols": ["markup_kw$ebnf$1"], "postprocess": (d) => _trace(d, d=>idjoiner(d), "markup_kw")},
+    {"name": "markup_kw", "symbols": ["markup_kw$ebnf$1"], "postprocess": (d) => _trace(d, d=>d[0].join(""), "markup_kw")},
     {"name": "attr_name$ebnf$1", "symbols": [/[a-zA-Z0-9]/]},
     {"name": "attr_name$ebnf$1", "symbols": ["attr_name$ebnf$1", /[a-zA-Z0-9]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "attr_name", "symbols": ["attr_name$ebnf$1"], "postprocess": (d) => _trace(d, d=>idjoiner(d), "attr_name")},
-    {"name": "plaintext$ebnf$1", "symbols": [/[^:]/]},
-    {"name": "plaintext$ebnf$1", "symbols": ["plaintext$ebnf$1", /[^:]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "plaintext", "symbols": ["plaintext$ebnf$1"], "postprocess": (d) => _trace(d, d=>idjoiner(d), "plaintext")}
+    {"name": "attr_name", "symbols": ["attr_name$ebnf$1"], "postprocess": (d) => _trace(d, d=>d[0].join(""), "attr_name")}
 ]
-  , ParserStart: "content"
+  , ParserStart: "all"
 }
 if (typeof module !== 'undefined'&& typeof module.exports !== 'undefined') {
    module.exports = grammar;

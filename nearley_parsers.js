@@ -2,13 +2,20 @@ const nearley = require("nearley");
 const grammar = require("./nearley_grammar.js");
 
 const ALLOW_AMBIGUOUS_GRAMMAR = false;
-const FEED_EOF = false;
-const EOF = "<EOF>";
+const FEED_EOF_IF_NEEDED = false;
+const EOF = "<EOF>"; // Must match token in grammar
+
+function _patch(res, patch) {
+    return Object.assign(res, patch);
+}
 
 function nearleyParseInner(text) {
-    if (!text) return { text: "" };
 
     let parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar), { keepHistory: false });
+    let res = {parser};
+
+    if (!text) return _patch(res, { text: "" });
+
     try {
 
         // TODO: Revisit after nearly adds EOF.
@@ -27,67 +34,86 @@ function nearleyParseInner(text) {
         // https://github.com/penrose/penrose/pull/510/files
 
         parser.feed(text);
-        // parser.feed(` ${text} `);
 
-        // if (parser.results.length == 1) {
-        //     return {
-        //         text: parser.results[0].flat(Infinity).join("")
-        //     };
-        // }
-
-        let logger = console.error;
-
-        let attempts = 2;
-        while (attempts > 0) {
-            if (parser.results.length == 0) {
-                --attempts;
-                if (FEED_EOF) {
-                    parser.feed(EOF); // TODO: Try using grammar to get the %EOF token from Moo or const in another .js file @imported into grammar
-                }
-                error = "No results";
-            } else if (parser.results.length == 1) { // TODO: Remove this block when EOF is addressed
-                return {
-                    text: parser.results[0].flat(Infinity).join("")
-                };
-            } else {
-                error = `Ambiguous grammar. Found ${parser.results.length} results`;
-            }
+        // Depending on the grammar, we might be stuck in a rule
+        // waiting for more chars (e.g. missing closing block).
+        // Given that neither the lexer nor the parser have support
+        // for EOF, there is no way for neither to abort and error out
+        // because all the input was consumed and nothing parsed.
+        // Hence, push <EOF> to make them "crash."
+        if (parser.results.length == 0 && FEED_EOF_IF_NEEDED) {
+            parser.feed(EOF); // TODO: Try using grammar to get the %EOF token from Moo or const in another .js file @imported into grammar
+            let eofWasFed = true;
+            _patch(res, {eofWasFed});
+        }
+        
+        if (parser.results.length == 1) {
+            return _patch(res, {
+                text: parser.results[0].flat(Infinity).join(""),
+            });
         }
 
-        let res = { error };
-
-        if (ALLOW_AMBIGUOUS_GRAMMAR) {
-            logger = console.warn;
-            let badResults = parser.results.slice(0, 2); // first 2.
-            if (badResults) {
-                // Flatten and compare. If they match, warn and return one.
-                let flatten0 = badResults[0].flat(Infinity).join("");
-                let flatten1 = badResults[1].flat(Infinity).join("");
-                if (flatten0 == flatten1) {
-                    console.warn("First two results matched when flattened. Unflattened look like this:")
-                    console.warn(JSON.stringify(badResults, null, 2));
-
-                    res.text = flatten0,
-                        res.warning = error;
-                    delete res.error;
+        let error;
+        if (parser.results.length == 0) {
+            error = "No results.";
+        } else {
+            error = `Ambiguous grammar. Found ${parser.results.length} results`;
+            if (areAmbiguousResultsEqual(parser)) {
+                if (ALLOW_AMBIGUOUS_GRAMMAR) {
+                    let warning = error;
+                    console.warn(warning);
+                    return _patch(res, {
+                        text: parser.results[0].flat(Infinity).join(""),
+                        warning,
+                    });
                 }
             }
         }
 
-        logger(parser.reportErrorCommon("N/A", "N/A"));
-        logger(error);
+        console.error(parser.reportErrorCommon("N/A", "N/A"));
+        console.error(error);
 
-        return res;
+        return _patch(res, { error });
     }
     catch (parseError) {
         console.error(parseError);
-        return { error: "Parse error" };
+        return _patch(res, { error: `Parse error.\n${parseError}` });
     }
 }
 
-function nearleyParse(text) {
-    res = nearleyParseInner(text);
-    return res?.error || (FEED_EOF ? res.text.slice(0, -EOF.length) : res.text);
+function areAmbiguousResultsEqual(parser) {
+    let badResults = parser.results.slice(0, 2); // first 2.
+    if (badResults) {
+        // Flatten and compare. If they match, warn and return one.
+        let flatten0 = badResults[0].flat(Infinity).join("");
+        let flatten1 = badResults[1].flat(Infinity).join("");
+        console.warn("First two results matched when flattened.");
+        return flatten0 == flatten1;
+    }
+    return false;
+}
+
+function _eofTail(text) {
+    // "plaintext<EOF>" formatted as "...ntext[<EOF>]"
+    return `...${text.slice(-2*EOF.length, -EOF.length)}[${text.slice(-EOF.length)}]`
+}
+
+function _wrapText(text) {
+    // return ` ${text} `;
+    return text;
+}
+
+function nearleyParse(text, ctx={}) {
+    let res = nearleyParseInner(_wrapText(text));
+    if (res.text) {
+        // res.text = res.text.trim();
+        if (res.eofWasFed) {
+            console.warn("<EOF> tail removed.", _eofTail(text));
+            res.text = res.text.slice(-EOF.length);
+        }
+    }
+    ctx.res = res;
+    return res?.error || res.text;
 }
 
 module.exports = { nearleyParseInner, nearleyParse }
