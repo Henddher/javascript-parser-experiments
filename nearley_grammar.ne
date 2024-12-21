@@ -90,24 +90,23 @@ all ->
     # By applying recursion, we can match the terminal %any_but_colon
     # at the beginning, in the middle, or at the end of any chunk of text
     # being lexed/parsed. I.e. we can match %any_but_colon anywhere.
-    %any_but_colon {% (d) => _trace(d, d=>d, "trace") %}
-    | all %any_but_colon {% (d) => _trace(d, d=>d, "trace") %}
+    %any_but_colon {% (d) => _trace(d, id, "trace") %}
+    | all %any_but_colon {% (d) => _trace(d, d=>d[0] + d[1], "trace") %}
 
     # Match a single colon anywhere.
     # Use left recursion.
-    | ":" {% (d) => _trace(d, d=>d, "trace") %}
-    | all ":" {% (d) => _trace(d, d=>d, "trace") %}
+    | ":" {% (d) => _trace(d, id, "trace") %}
+    | all ":" {% (d) => _trace(d, d=>d[0] + d[1], "trace") %}
 
     # Match a sequence of colons anywhere.
     # Use left recursion.
-    | colons_etc {% (d) => _trace(d, d=>d, "trace") %}
-    | all colons_etc {% (d) => _trace(d, d=>d, "trace") %}
+    | colons_etc {% (d) => _trace(d, id, "trace") %}
+    | all colons_etc {% (d) => _trace(d, d=>d[0] + d[1], "trace") %}
 
 colons_etc -> 
-    %colons2xplus __ {% (d) => _trace(d, d=>null, "null") %}
-    | %colons2xplus markup_def {% (d) => _trace(d, d=>d[1], "markup") %}
+    %colons2xplus markup_def {% (d) => _trace(d, d=>d[1] || "", "markup") %}
 
-end -> %EOF
+end -> %EOF {% (d) => _trace(d, d=>d, "EOF") %}
 
 markup_def ->
     markup_kw markup_body {% (d) => _trace(d, d=>renderMarkup(d[0], d[1]), "markup_def") %}
