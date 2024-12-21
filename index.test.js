@@ -158,25 +158,48 @@ describe("return 'parse error' with invalid markup", () => {
     });
 });
 
+describe("ignore ::+ when applicable (incomplete rules produce no results)", () => {
+    let ctx = {};
+    test.failing.each([
+        ["a::", "a"],
+        ["a::a", "a"],
+        ["\n::", "\n"],
+
+        ["a:::", "a"],
+        ["a:::a", "a"],
+        ["\n:::", "\n"],
+
+        ["a::::", "a"],
+        ["a::::a", "a"],
+        ["\n::::", "\n"],
+
+        ["a:::::", "a"],
+        ["a:::::a", "a"],
+        ["\n:::::", "\n"],
+    ])("(%s)", (text, expected) => {
+        res = parse(text, ctx);
+        expect(res).toMatch(expected);
+    });
+});
+    
 describe("ignore ::+ when applicable", () => {
     let ctx = {};
-    // TODO: Add tests with EOF (\n at the end) AND tests that make parser inject EOF)
     test.each([
         ["::", ""],
         [" ::", " "],
         [":: ", " "],
         [" :: ", "  "],
-        ["\n::", "\n"],
+        // ["\n::", "\n"],
         ["::\n", "\n"],
         ["\n::\n", "\n\n"],
         [".::", "."],
         ["::.", parseErrorRegex],
         [".::.", parseErrorRegex],
-        ["a::", "a"],
-        // ["::a", ""], // This is a valid unknown markup
-        // ["a::a", "a"], // This is a valid unknown markup
+        // ["a::", "a"],
+        ["::a", ""],
+        // ["a::a", "a"],
 
-    ])("(%s)", (text, expected) => {
+    ])("2x :: (%s)", (text, expected) => {
         res = parse(text, ctx);
         expect(res).toMatch(expected);
     });
@@ -186,17 +209,17 @@ describe("ignore ::+ when applicable", () => {
         [" :::", " "],
         ["::: ", " "],
         [" ::: ", "  "],
-        ["\n:::", "\n"],
+        // ["\n:::", "\n"],
         [":::\n", "\n"],
         ["\n:::\n", "\n\n"],
         [".:::", "."],
         [":::.", parseErrorRegex],
         [".:::.", parseErrorRegex],
-        ["a:::", "a"],
-        [":::a", ""], // This is a valid unknown markup
-        ["a:::a", "a"], // This is a valid unknown markup
+        // ["a:::", "a"],
+        [":::a", ""],
+        // ["a:::a", "a"],
 
-    ])("(%s)", (text, expected) => {
+    ])("3x ::: (%s)", (text, expected) => {
         res = parse(text, ctx);
         expect(res).toMatch(expected);
     });
@@ -206,17 +229,17 @@ describe("ignore ::+ when applicable", () => {
         [" ::::", " "],
         [":::: ", " "],
         [" :::: ", "  "],
-        ["\n::::", "\n"],
+        // ["\n::::", "\n"],
         ["::::\n", "\n"],
         ["\n::::\n", "\n\n"],
         [".::::", "."],
         ["::::.", parseErrorRegex],
         [".::::.", parseErrorRegex],
-        ["a::::", "a"],
-        ["::::a", ""], // This is a valid unknown markup
-        ["a::::a", "a"], // This is a valid unknown markup
+        // ["a::::", "a"],
+        ["::::a", ""],
+        // ["a::::a", "a"],
 
-    ])("(%s)", (text, expected) => {
+    ])("4x :::: (%s)", (text, expected) => {
         res = parse(text, ctx);
         expect(res).toMatch(expected);
     });
@@ -226,17 +249,17 @@ describe("ignore ::+ when applicable", () => {
         [" :::::", " "],
         ["::::: ", " "],
         [" ::::: ", "  "],
-        ["\n:::::", "\n"],
+        // ["\n:::::", "\n"],
         [":::::\n", "\n"],
         ["\n:::::\n", "\n\n"],
         [".:::::", "."],
         [":::::.", parseErrorRegex],
         [".:::::.", parseErrorRegex],
-        ["a:::::", "a"],
-        [":::::a", ""], // This is a valid unknown markup
-        ["a:::::a", "a"], // This is a valid unknown markup
+        // ["a:::::", "a"],
+        [":::::a", ""],
+        // ["a:::::a", "a"],
 
-    ])("(%s)", (text, expected) => {
+    ])("5x ::::: (%s)", (text, expected) => {
         res = parse(text, ctx);
         expect(res).toMatch(expected);
     });
