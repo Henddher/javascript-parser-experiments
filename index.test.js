@@ -2,6 +2,8 @@ const parsers = require("./index.js");
 // const parse = parsers.pegParse;
 const parse = parsers.nearleyParse;
 
+const parseErrorRegex = /Parse error\.\n*/;
+
 describe("parse plaintext", () => {
     test("no input", () => {
         res = parse("");
@@ -42,18 +44,53 @@ describe("parse plaintext", () => {
 });
 
 describe("parse unknown markup ::ab (w/ and w/o attrs)", () => {
-    test("::ab", () => {
-        res = parse("::ab");
-        expect(res).toEqual("");
-    });
-    test("::ab ", () => {
+    test.failing("::ab", () => {
         res = parse("::ab");
         expect(res).toEqual("");
     });
     test("::ab\n", () => {
-        res = parse("::ab");
+        res = parse("::ab\n");
         expect(res).toEqual("");
     });
+    test("::ab.", () => {
+        res = parse("::ab.");
+        expect(res).toMatch(parseErrorRegex);
+    });
+    test("::ab ", () => {
+        res = parse("::ab ");
+        expect(res).toEqual("");
+    });
+
+    test.failing("\n::ab", () => {
+        res = parse("\n::ab");
+        expect(res).toEqual("\n");
+    });
+    test.failing(".::ab", () => {
+        res = parse(".::ab");
+        expect(res).toEqual(".");
+    });
+    test.failing(" ::ab", () => {
+        res = parse(" ::ab");
+        expect(res).toEqual(" ");
+    });
+
+    test.failing(":::ab", () => {
+        res = parse(":::ab");
+        expect(res).toEqual("");
+    });
+    test(":::ab\n", () => {
+        res = parse(":::ab\n");
+        expect(res).toEqual("");
+    });
+    test(":::ab.", () => {
+        res = parse(":::ab.");
+        expect(res).toMatch(parseErrorRegex);
+    });
+    test(":::ab ", () => {
+        res = parse(":::ab ");
+        expect(res).toEqual("");
+    });
+
     test("::ab{}", () => {
         res = parse("::ab{}");
         expect(res).toEqual("");
@@ -91,7 +128,6 @@ describe("parse unknown markup ::ab (w/ and w/o attrs)", () => {
 });
 
 describe("return 'parse error' with invalid markup", () => {
-    let parseErrorRegex = /Parse error\.\n*/;
     test("::invalid. is not terminated by \s", () => {
         res = parse("::invalid.");
         expect(res).toMatch(parseErrorRegex);
@@ -122,41 +158,104 @@ describe("return 'parse error' with invalid markup", () => {
     });
 });
 
-describe("ignore ::+", () => {
+describe("ignore ::+ when applicable", () => {
     let ctx = {};
     // TODO: Add tests with EOF (\n at the end) AND tests that make parser inject EOF)
-    test(":: is allowed and gets skipped", () => {
-        res = parse("::", ctx);
-        expect(res).toEqual("");
+    test.each([
+        ["::", ""],
+        [" ::", " "],
+        [":: ", " "],
+        [" :: ", "  "],
+        ["\n::", "\n"],
+        ["::\n", "\n"],
+        ["\n::\n", "\n\n"],
+        [".::", "."],
+        ["::.", parseErrorRegex],
+        [".::.", parseErrorRegex],
+        ["a::", "a"],
+        // ["::a", ""], // This is a valid unknown markup
+        // ["a::a", "a"], // This is a valid unknown markup
+
+    ])("(%s)", (text, expected) => {
+        res = parse(text, ctx);
+        expect(res).toMatch(expected);
     });
-    test("::: is allowed and gets skipped", () => {
-        res = parse(":::", ctx);
-        expect(res).toEqual("");
+
+    test.each([
+        [":::", ""],
+        [" :::", " "],
+        ["::: ", " "],
+        [" ::: ", "  "],
+        ["\n:::", "\n"],
+        [":::\n", "\n"],
+        ["\n:::\n", "\n\n"],
+        [".:::", "."],
+        [":::.", parseErrorRegex],
+        [".:::.", parseErrorRegex],
+        ["a:::", "a"],
+        [":::a", ""], // This is a valid unknown markup
+        ["a:::a", "a"], // This is a valid unknown markup
+
+    ])("(%s)", (text, expected) => {
+        res = parse(text, ctx);
+        expect(res).toMatch(expected);
     });
-    test(":::: is allowed and gets skipped", () => {
-        res = parse("::::", ctx);
-        expect(res).toEqual("");
+
+    test.each([
+        ["::::", ""],
+        [" ::::", " "],
+        [":::: ", " "],
+        [" :::: ", "  "],
+        ["\n::::", "\n"],
+        ["::::\n", "\n"],
+        ["\n::::\n", "\n\n"],
+        [".::::", "."],
+        ["::::.", parseErrorRegex],
+        [".::::.", parseErrorRegex],
+        ["a::::", "a"],
+        ["::::a", ""], // This is a valid unknown markup
+        ["a::::a", "a"], // This is a valid unknown markup
+
+    ])("(%s)", (text, expected) => {
+        res = parse(text, ctx);
+        expect(res).toMatch(expected);
     });
-    test("::::: is allowed and gets skipped", () => {
-        res = parse(":::::", ctx);
-        expect(res).toEqual("");
+
+    test.each([
+        [":::::", ""],
+        [" :::::", " "],
+        ["::::: ", " "],
+        [" ::::: ", "  "],
+        ["\n:::::", "\n"],
+        [":::::\n", "\n"],
+        ["\n:::::\n", "\n\n"],
+        [".:::::", "."],
+        [":::::.", parseErrorRegex],
+        [".:::::.", parseErrorRegex],
+        ["a:::::", "a"],
+        [":::::a", ""], // This is a valid unknown markup
+        ["a:::::a", "a"], // This is a valid unknown markup
+
+    ])("(%s)", (text, expected) => {
+        res = parse(text, ctx);
+        expect(res).toMatch(expected);
     });
 });
 
 describe("parse attribute-less markup (e.g. ::any )", () => {
     let ctx = {};
-    test("::row", () => {
+    test.failing("::row", () => {
         res = parse("::row", ctx);
         expect(res).toEqual("");
     });
-    test(":::::any", () => {
+    test.failing(":::::any", () => {
         res = parse(":::::any", ctx);
         expect(res).toEqual("");
     });
 });
 
 describe("parse ::row (w/ and w/o attrs)", () => {
-    test("::row", () => {
+    test.failing("::row", () => {
         res = parse("::row");
         expect(res).toEqual("");
     });

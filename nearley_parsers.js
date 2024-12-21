@@ -49,7 +49,7 @@ function nearleyParseInner(text) {
         
         if (parser.results.length == 1) {
             return _patch(res, {
-                text: parser.results[0].flat(Infinity).join(""),
+                text: parser.results[0] //.flat(Infinity).join(""),
             });
         }
 
@@ -63,7 +63,7 @@ function nearleyParseInner(text) {
                     let warning = error;
                     console.warn(warning);
                     return _patch(res, {
-                        text: parser.results[0].flat(Infinity).join(""),
+                        text: parser.results[0], //.flat(Infinity).join(""),
                         warning,
                     });
                 }
@@ -85,8 +85,8 @@ function areAmbiguousResultsEqual(parser) {
     let badResults = parser.results.slice(0, 2); // first 2.
     if (badResults) {
         // Flatten and compare. If they match, warn and return one.
-        let flatten0 = badResults[0].flat(Infinity).join("");
-        let flatten1 = badResults[1].flat(Infinity).join("");
+        let flatten0 = badResults[0]; //.flat(Infinity).join("");
+        let flatten1 = badResults[1]; //.flat(Infinity).join("");
         console.warn("First two results matched when flattened.");
         return flatten0 == flatten1;
     }
