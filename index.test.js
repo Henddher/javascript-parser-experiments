@@ -158,110 +158,117 @@ describe("return 'parse error' with invalid markup", () => {
     });
 });
 
+describe("return 'parse error' with colons not terminated by \s", () => {
+    test.each([
+        "::.",
+        ".::.",
+        ":::.",
+        ".:::.",
+        "::::.",
+        ".::::.",
+        ":::::.",
+        ".:::::.",
+    ])("%s", (text) => {
+        res = parse("::invalid{=}");
+        expect(res).toMatch(parseErrorRegex);
+    });
+});
+
 describe("ignore ::+ when applicable (incomplete rules produce no results)", () => {
     let ctx = {};
     test.failing.each([
+        ["::", ""],
+        [" ::", " "],
         ["a::", "a"],
+        ["::a", ""],
         ["a::a", "a"],
         ["\n::", "\n"],
+        [".::", "."],
+    ])("2x :: (%s)", (text, expected) => {
+        res = parse(text, ctx);
+        expect(res).toEqual(expected);
+    });
 
+    test.failing.each([
+        [":::", ""],
+        [" :::", " "],
         ["a:::", "a"],
+        [":::a", ""],
         ["a:::a", "a"],
         ["\n:::", "\n"],
+        [".:::", "."],
+    ])("3x ::: (%s)", (text, expected) => {
+        res = parse(text, ctx);
+        expect(res).toEqual(expected);
+    });
 
+    test.failing.each([
+        ["::::", ""],
+        [" ::::", " "],
         ["a::::", "a"],
+        ["::::a", ""],
         ["a::::a", "a"],
         ["\n::::", "\n"],
+        [".::::", "."],
+    ])("4x :::: (%s)", (text, expected) => {
+        res = parse(text, ctx);
+        expect(res).toEqual(expected);
+    });
 
+    test.failing.each([
+        [":::::", ""],
+        [" :::::", " "],
         ["a:::::", "a"],
+        [":::::a", ""],
         ["a:::::a", "a"],
         ["\n:::::", "\n"],
-    ])("(%s)", (text, expected) => {
+        [".:::::", "."],
+    ])("5x ::::: (%s)", (text, expected) => {
         res = parse(text, ctx);
-        expect(res).toMatch(expected);
+        expect(res).toEqual(expected);
     });
 });
-    
+
 describe("ignore ::+ when applicable", () => {
     let ctx = {};
     test.each([
-        ["::", ""],
-        [" ::", " "],
-        [":: ", " "],
-        [" :: ", "  "],
-        // ["\n::", "\n"],
-        ["::\n", "\n"],
-        ["\n::\n", "\n\n"],
-        [".::", "."],
-        ["::.", parseErrorRegex],
-        [".::.", parseErrorRegex],
-        // ["a::", "a"],
-        ["::a", ""],
-        // ["a::a", "a"],
-
+        [":: ", ""],
+        [" :: ", " "],
+        ["::\n", ""],
+        ["\n::\n", "\n"],
     ])("2x :: (%s)", (text, expected) => {
         res = parse(text, ctx);
-        expect(res).toMatch(expected);
+        expect(res).toEqual(expected);
     });
 
     test.each([
-        [":::", ""],
-        [" :::", " "],
-        ["::: ", " "],
-        [" ::: ", "  "],
-        // ["\n:::", "\n"],
-        [":::\n", "\n"],
-        ["\n:::\n", "\n\n"],
-        [".:::", "."],
-        [":::.", parseErrorRegex],
-        [".:::.", parseErrorRegex],
-        // ["a:::", "a"],
-        [":::a", ""],
-        // ["a:::a", "a"],
-
+        ["::: ", ""],
+        [" ::: ", " "],
+        [":::\n", ""],
+        ["\n:::\n", "\n"],
     ])("3x ::: (%s)", (text, expected) => {
         res = parse(text, ctx);
-        expect(res).toMatch(expected);
+        expect(res).toEqual(expected);
     });
 
     test.each([
-        ["::::", ""],
-        [" ::::", " "],
-        [":::: ", " "],
-        [" :::: ", "  "],
-        // ["\n::::", "\n"],
-        ["::::\n", "\n"],
-        ["\n::::\n", "\n\n"],
-        [".::::", "."],
-        ["::::.", parseErrorRegex],
-        [".::::.", parseErrorRegex],
-        // ["a::::", "a"],
-        ["::::a", ""],
-        // ["a::::a", "a"],
-
+        [":::: ", ""],
+        [" :::: ", " "],
+        ["::::\n", ""],
+        ["\n::::\n", "\n"],
     ])("4x :::: (%s)", (text, expected) => {
         res = parse(text, ctx);
-        expect(res).toMatch(expected);
+        expect(res).toEqual(expected);
     });
 
     test.each([
-        [":::::", ""],
-        [" :::::", " "],
-        ["::::: ", " "],
-        [" ::::: ", "  "],
-        // ["\n:::::", "\n"],
-        [":::::\n", "\n"],
-        ["\n:::::\n", "\n\n"],
-        [".:::::", "."],
-        [":::::.", parseErrorRegex],
-        [".:::::.", parseErrorRegex],
-        // ["a:::::", "a"],
-        [":::::a", ""],
-        // ["a:::::a", "a"],
-
+        ["::::: ", ""],
+        [" ::::: ", " "],
+        [":::::\n", ""],
+        ["\n:::::\n", "\n"],
     ])("5x ::::: (%s)", (text, expected) => {
         res = parse(text, ctx);
-        expect(res).toMatch(expected);
+        expect(res).toEqual(expected);
     });
 });
 
@@ -297,7 +304,7 @@ describe("parse ::row (w/ and w/o attrs)", () => {
 });
 
 describe("parse ::quoted-text{}", () => {
-    const template = ({quote, author}) => `\n> ${quote || ""}\n> \t - ${author || ""}\n`; // TODO: abstract out all specifics from the grammar.
+    const template = ({ quote, author }) => `\n> ${quote || ""}\n> \t - ${author || ""}\n`; // TODO: abstract out all specifics from the grammar.
     const reQuoteAuthor = /^.*Quote.*Author.*$/sgm;
     test("::quoted-text{}", () => {
         res = parse("::quoted-text{}");
@@ -311,23 +318,23 @@ describe("parse ::quoted-text{}", () => {
         res = parse("::quoted-text{author='Author' quote=\"Quote\"}");
         expect(res).toMatch(reQuoteAuthor);
         // Exact templated string match. This test is prone to break if the template changes.
-        expect(res).toEqual(template({author: "Author", quote: "Quote"}));
+        expect(res).toEqual(template({ author: "Author", quote: "Quote" }));
     });
     test("::quoted-text{author='Hamlet'}", () => {
         res = parse("::quoted-text{author='Hamlet'}");
-        expect(res).toEqual(template({author: "Hamlet"}));
+        expect(res).toEqual(template({ author: "Hamlet" }));
     });
     test("::quoted-text{quote='To be or not to be ...'}", () => {
         res = parse("::quoted-text{quote='To be or not to be ...'}");
-        expect(res).toEqual(template({quote: "To be or not to be ..."}));
+        expect(res).toEqual(template({ quote: "To be or not to be ..." }));
     });
     test("::quoted-text{author='Hamlet' quote='To be or not to be ...'}", () => {
         res = parse("::quoted-text{author='Hamlet' quote='To be or not to be ...'}");
-        expect(res).toEqual(template({author: "Hamlet", quote: "To be or not to be ..."}));
+        expect(res).toEqual(template({ author: "Hamlet", quote: "To be or not to be ..." }));
     });
     test("::quoted-text{unknown='unknown' author='Hamlet' quote='To be or not to be ...'}", () => {
         res = parse("::quoted-text{unknown='unknown' author='Hamlet' quote='To be or not to be ...'}");
-        expect(res).toEqual(template({author: "Hamlet", quote: "To be or not to be ...", unknown: "???"}));
+        expect(res).toEqual(template({ author: "Hamlet", quote: "To be or not to be ...", unknown: "???" }));
     });
 });
 
