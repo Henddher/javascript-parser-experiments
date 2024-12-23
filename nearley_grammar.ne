@@ -111,7 +111,7 @@ end -> %EOF {% (d) => _trace(d, d=>d, "EOF") %}
 markup_def ->
     markup_kw markup_body {% (d) => _trace(d, d=>renderMarkup(d[0], d[1]), "markup_def") %}
     | markup_kw __ {% (d) => _trace(d, d=>renderMarkup(d[0], []), "markup_def") %}
-    | __ {% (d) => _trace(d, d=>"", "markup_def") %}
+    | [ \n] {% (d) => _trace(d, d=>"", "markup_def") %}
 
 markup_body -> "{" _ markup_attrs "}" {% (d) => _trace(d, d=>d[2], "markup_body") %}
 

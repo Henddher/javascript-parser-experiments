@@ -4,14 +4,22 @@ const parse = parsers.nearleyParse;
 
 const parseErrorRegex = /Parse error\.\n*/;
 
+describe("unambiguous grammar", () => {
+    let ctx = {};
+    test.each([
+        ["ok", "ok"],
+        ["::\n\n ", "\n "],
+    ])("%s", (text, expected) => {
+        res = parse(text, ctx);
+        expect(ctx.res.parser.results.length).toEqual(1);
+        expect(res).toEqual(expected);
+    });
+});
+
 describe("parse plaintext", () => {
     test("no input", () => {
         res = parse("");
         expect(res).toEqual("");
-    });
-    test("grammar is not ambiguous ('pt', a 2-letter word would produce 2 results if grammar were ambiguous)", () => {
-        res = parse("pt");
-        expect(res).toEqual("pt");
     });
     test("plaintext", () => {
         res = parse("plaintext");

@@ -115,7 +115,7 @@ var grammar = {
     {"name": "end", "symbols": [(lexer.has("EOF") ? {type: "EOF"} : EOF)], "postprocess": (d) => _trace(d, d=>d, "EOF")},
     {"name": "markup_def", "symbols": ["markup_kw", "markup_body"], "postprocess": (d) => _trace(d, d=>renderMarkup(d[0], d[1]), "markup_def")},
     {"name": "markup_def", "symbols": ["markup_kw", "__"], "postprocess": (d) => _trace(d, d=>renderMarkup(d[0], []), "markup_def")},
-    {"name": "markup_def", "symbols": ["__"], "postprocess": (d) => _trace(d, d=>"", "markup_def")},
+    {"name": "markup_def", "symbols": [/[ \n]/], "postprocess": (d) => _trace(d, d=>"", "markup_def")},
     {"name": "markup_body", "symbols": [{"literal":"{"}, "_", "markup_attrs", {"literal":"}"}], "postprocess": (d) => _trace(d, d=>d[2], "markup_body")},
     {"name": "markup_attrs$ebnf$1", "symbols": []},
     {"name": "markup_attrs$ebnf$1", "symbols": ["markup_attrs$ebnf$1", "markup_attr"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
