@@ -110,8 +110,8 @@ end -> %EOF {% (d) => _trace(d, d=>d, "EOF") %}
 
 markup_def ->
     markup_kw markup_body {% (d) => _trace(d, d=>renderMarkup(d[0], d[1]), "markup_def") %}
-    | markup_kw __ {% (d) => _trace(d, d=>renderMarkup(d[0], []), "markup_def") %}
-    | [ \n] {% (d) => _trace(d, d=>"", "markup_def") %}
+    | markup_kw markup_end {% (d) => _trace(d, d=>renderMarkup(d[0], []), "markup_def") %}
+    | markup_end {% (d) => _trace(d, d=>"", "markup_def") %}
 
 markup_body -> "{" _ markup_attrs "}" {% (d) => _trace(d, d=>d[2], "markup_body") %}
 
@@ -126,3 +126,5 @@ string ->
 markup_kw -> [a-zA-Z0-9-]:+ {% (d) => _trace(d, d=>d[0].join(""), "markup_kw") %}
 
 attr_name -> [a-zA-Z0-9]:+ {% (d) => _trace(d, d=>d[0].join(""), "attr_name") %}
+
+markup_end -> [ \n]
